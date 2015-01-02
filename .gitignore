@@ -41,3 +41,13 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+Debug
+x64
+NESEmu/x64
+NESEmu/Debug
+*.filters
+*.user
+*.v12.suo
+*.opensdf
+*.sdf
