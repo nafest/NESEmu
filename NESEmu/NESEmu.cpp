@@ -2,12 +2,12 @@
 //
 
 #include "stdafx.h"
-#include "ROM.h"
+#include "Emulator.h"
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	ROM rom("../../roms/Super Mario Bros. (E).nes");
+	Emulator emu;
 	return 0;
 }
 

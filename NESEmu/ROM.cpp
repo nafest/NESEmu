@@ -16,6 +16,14 @@ ROM::ROM(string fileName) {
 	fstream.read(data.data(), size);
 }
 
+void ROM::CopyPGR(int bank, unsigned char * memory)
+{
+	int romOffset = 16 + 16318 * bank;
+	int memOffset = (bank == 0) ? 0x8000 : 0xc000;
+
+	memcpy(memory + memOffset, data.data() + romOffset, 16318);
+}
+
 
 ROM::~ROM()
 {

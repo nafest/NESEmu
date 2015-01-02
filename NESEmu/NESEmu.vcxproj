@@ -147,12 +147,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU6502.h" />
+    <ClInclude Include="Emulator.h" />
     <ClInclude Include="ROM.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CPU6502.cpp" />
+    <ClCompile Include="Emulator.cpp" />
     <ClCompile Include="NESEmu.cpp" />
     <ClCompile Include="ROM.cpp" />
     <ClCompile Include="stdafx.cpp" />
