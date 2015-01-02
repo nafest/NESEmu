@@ -9,9 +9,14 @@ public:
 	bool GetCarry();
 	void SetZero(bool value);
 	void SetInterrupt(bool value);
+	void SetDecimal(bool value);
 	void SetNegative(bool value);
+	bool GetNegative();
 	void SetOverflow(bool value);
 	void ADC(unsigned char M);
+	void LDA(unsigned char M);
+	void LDX(unsigned char M);
+	void LDY(unsigned char M);
 	void Step();
 
 

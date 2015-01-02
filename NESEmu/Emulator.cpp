@@ -10,8 +10,8 @@ Emulator::Emulator()
 	/* and copy the two PGR-ROM banks */
 	rom->CopyPGR(0, memory);
 	rom->CopyPGR(1, memory);
-
-	cpu->Step();
+	for (int i = 0; i < 10; i++)
+		cpu->Step();
 }
 
 
