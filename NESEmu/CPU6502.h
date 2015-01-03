@@ -17,6 +17,7 @@ public:
 	void LDA(unsigned char M);
 	void LDX(unsigned char M);
 	void LDY(unsigned char M);
+	void CMP(unsigned char M);
 	void Step();
 
 

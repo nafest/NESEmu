@@ -1,4 +1,7 @@
 #include "CPU6502.h"
+#include <iostream>
+
+using namespace std;
 
 
 CPU6502::CPU6502(unsigned char *memory)
@@ -94,6 +97,16 @@ void CPU6502::ADC(unsigned char M)
 	SetNegative(result > 127);
 }
 
+void CPU6502::CMP(unsigned char M)
+{
+	unsigned short result = A - M;
+
+	SetCarry(A >= M);
+	SetZero(A == M);
+
+	SetNegative(result > 127);
+}
+
 void CPU6502::LDA(unsigned char M)
 {
 	A = M;
@@ -183,6 +196,15 @@ void CPU6502::Step() {
 		LDA(M);
 		break;
 
+	case 0xbd:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		addr += X;
+		M = memory[addr];
+		LDA(M);
+		break;
+
 	/* LDX - load X Register */
 	case 0xa2:
 		/* immediate addressing */
@@ -247,10 +269,30 @@ void CPU6502::Step() {
 	case 0x10:
 		offset8 = (char)memory[PC];
 		if (!GetNegative())
-			PC += offset8;
+			PC += 1 + offset8;
 		else
 			PC++;
 		break;
 
+	/* BPC - Branch if Carry Set */
+	case 0xb0:
+		offset8 = (char)memory[PC];
+		if (GetCarry())
+			PC += 1 + offset8;
+		else
+			PC++;
+		break;
+	/* CMP - compare */
+	case 0xc9:
+		/* immediate */
+		M = memory[PC];
+		PC++;
+		CMP(M);
+		break;
+
+		/* unimplemented instruction */
+	default:
+		exit(-1);
+		break;
 	}
 }
