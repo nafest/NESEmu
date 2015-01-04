@@ -14,11 +14,12 @@ public:
 	bool GetNegative();
 	void SetOverflow(bool value);
 	void ADC(unsigned char M);
+	void AND(unsigned char M);
 	void LDA(unsigned char M);
 	void LDX(unsigned char M);
 	void LDY(unsigned char M);
 	void CMP(unsigned char M);
-	void Step();
+	int Step();
 
 
 private:

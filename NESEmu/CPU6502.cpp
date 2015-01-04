@@ -97,6 +97,14 @@ void CPU6502::ADC(unsigned char M)
 	SetNegative(result > 127);
 }
 
+void CPU6502::AND(unsigned char M)
+{
+	A = A & M;
+
+	SetZero(A == 0);
+	SetNegative(A > 127);
+}
+
 void CPU6502::CMP(unsigned char M)
 {
 	unsigned short result = A - M;
@@ -128,7 +136,7 @@ void CPU6502::LDY(unsigned char M)
 	SetNegative(Y > 127);
 }
 
-void CPU6502::Step() {
+int CPU6502::Step() {
 	/* fetch the next instruction */
 	unsigned char OpCode = memory[PC];
 
@@ -149,14 +157,14 @@ void CPU6502::Step() {
 		M = memory[addr];
 		PC++;
 		ADC(M);
-		break;
+		return 3;
 
 	case 0x69:
 		/* immediate addressing */
 		M = memory[PC];
 		PC++;
 		ADC(M);
-		break;
+		return 2;
 
 	case 0x75:
 		/* ZeroPage, X */
@@ -165,7 +173,120 @@ void CPU6502::Step() {
 		M = memory[addr];
 		PC++;
 		ADC(M);
-		break;
+		return 4;
+
+	case 0x6d:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		M = memory[addr];
+		ADC(M);
+		return 4;
+
+	case 0x7d:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + X;
+		PC += 2;
+		M = memory[addr];
+		ADC(M);
+		return 4;
+
+	case 0x79:
+		/* absolute,Y addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + Y;
+		PC += 2;
+		M = memory[addr];
+		ADC(M);
+		return 4;
+
+	case 0x61:
+		/* indirect,X addressing */
+		addr = memory[PC];
+		addr = addr + X;
+		PC += 1;
+		M = memory[addr];
+		ADC(M);
+		return 6;
+
+	case 0x71:
+		/* indirect,Y addressing */
+		addr = memory[PC];
+		addr = memory[addr] + Y;
+		PC += 1;
+		M = memory[addr];
+		ADC(M);
+		return 5;
+
+	/* AND - logical AND */
+	case 0x25:
+		/* ZeroPage */
+		addr = memory[PC];
+		M = memory[addr];
+		PC++;
+		AND(M);
+		return 3;
+
+	case 0x29:
+		/* immediate addressing */
+		M = memory[PC];
+		PC++;
+		AND(M);
+		return 2;
+
+	case 0x35:
+		/* ZeroPage, X */
+		addr = memory[PC];
+		addr = (addr + X) & 0xff;
+		M = memory[addr];
+		PC++;
+		AND(M);
+		return 4;
+
+	case 0x2d:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		M = memory[addr];
+		AND(M);
+		return 4;
+
+	case 0x3d:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + X;
+		PC += 2;
+		M = memory[addr];
+		AND(M);
+		return 4;
+
+	case 0x39:
+		/* absolute,Y addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + Y;
+		PC += 2;
+		M = memory[addr];
+		AND(M);
+		return 4;
+
+	case 0x21:
+		/* indirect,X addressing */
+		addr = memory[PC];
+		addr = addr + X;
+		PC += 1;
+		M = memory[addr];
+		AND(M);
+		return 6;
+
+	case 0x31:
+		/* indirect,Y addressing */
+		addr = memory[PC];
+		addr = memory[addr] + Y;
+		PC += 1;
+		M = memory[addr];
+		AND(M);
+		return 5;
 
 	/* SEI - set intterupt disable */
 	case 0x78:
