@@ -5,6 +5,7 @@ public:
 	CPU6502(unsigned char *memory);
 	~CPU6502();
 
+	void PrintState();
 	void SetCarry(bool value);
 	bool GetCarry();
 	void SetZero(bool value);
@@ -37,7 +38,8 @@ public:
 	void ROR(unsigned char M);
 	void SBC(unsigned char M);
 	int Step();
-
+	int OneStep();
+	void SetPC(unsigned short PC);
 
 private:
 	unsigned short PC;   /* program counter */
@@ -48,5 +50,7 @@ private:
 	unsigned char  P;    /* processor status */
 
 	unsigned char  *memory;  /* pointer to memory */
+
+	long cycles;
 };
 

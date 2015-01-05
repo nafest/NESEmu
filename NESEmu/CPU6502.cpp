@@ -8,11 +8,13 @@ CPU6502::CPU6502(unsigned char *memory)
 {
 	this->memory = memory;
 	PC = 0x8000;
-	SP = 0;
+	SP = 0xfd;
 	A = 0;
 	X = 0;
 	Y = 0;
-	P = 0;
+	P = 0x24;
+
+	cycles = 0;
 }
 
 
@@ -20,6 +22,22 @@ CPU6502::~CPU6502()
 {
 }
 
+
+void CPU6502::SetPC(unsigned short pc)
+{
+	PC = pc;
+}
+
+void CPU6502::PrintState() {
+	cout << hex << (int)PC << "\tA: " << hex << (int)A;
+	cout << "\tX: " << hex << (int)X;
+	cout << "\tY: " << hex << (int)Y;
+	cout << "\tP: " << hex << (int)P;
+	cout << "\tSP: " << hex << (int)SP;
+	cout << "\tCYC: " << dec << (int)cycles;
+
+	cout << endl;
+}
 
 void CPU6502::SetCarry(bool value) {
 	/* the carry flag is in bit 0 of P */
@@ -117,28 +135,32 @@ unsigned char CPU6502::Pop() {
 
 void CPU6502::ADC(unsigned char M)
 {
-	unsigned short result = A + M + GetCarry() ? 1 : 0;
+	unsigned short result = A + M + (GetCarry() ? 1 : 0);
 
 	SetCarry(result > 255);
-	SetZero(result == 0);
+	SetZero((result & 0xff) == 0);
 	if ((((A ^ M) & 0x80) == 0) && (((A ^ result) & 0x80) != 0))
 		SetOverflow(true);
 	else
 		SetOverflow(false);
-	SetNegative(result > 127);
+	SetNegative((result & 0xff) > 127);
+
+	A = result & 0xff;
 }
 
 void CPU6502::SBC(unsigned char M)
 {
-	unsigned short result = A - M - (1 - GetCarry() ? 1 : 0);
+	unsigned short result = A - M - (1 - (GetCarry() ? 1 : 0));
 
 	SetCarry(result > 255);
-	SetZero(result == 0);
+	SetZero((result & 0xff) == 0);
 	if ((((A ^ M) & 0x80) == 0) && (((A ^ result) & 0x80) != 0))
 		SetOverflow(true);
 	else
 		SetOverflow(false);
-	SetNegative(result > 127);
+	SetNegative((result & 0xff) > 127);
+
+	A = result & 0xff;
 }
 
 
@@ -171,8 +193,8 @@ void CPU6502::BIT(unsigned char M)
 	unsigned char result = A & M;
 
 	SetZero(result == 0);
-	SetOverflow((result & (1 << 6)) != 0);
-	SetNegative((result & (1 << 7)) != 0);
+	SetOverflow((M & (1 << 6)) != 0);
+	SetNegative((M & (1 << 7)) != 0);
 }
 
 void CPU6502::CMP(unsigned char M)
@@ -294,6 +316,16 @@ void CPU6502::LDY(unsigned char M)
 }
 
 int CPU6502::Step() {
+	int cyc = OneStep();
+	cycles += cyc;
+
+	return cyc;
+}
+
+int CPU6502::OneStep() {
+
+	PrintState();
+
 	/* fetch the next instruction */
 	unsigned char OpCode = memory[PC];
 
@@ -1355,7 +1387,7 @@ int CPU6502::Step() {
 
 	/* PHP Push Processor Status */
 	case 0x08:
-		Push(P);
+		Push(P | (1 << 4));  /* Bit 4 is always set on the stack */
 		return 3;
 
 	/* PLA Pull Accumulator */
@@ -1368,8 +1400,9 @@ int CPU6502::Step() {
 	/* PLP Pull Processor Status */
 	case 0x28:
 		P = Pop();
+		SetBreak(false);
+		P |= (1 << 5); /* Bit 5 is always set */
 		return 4;
-
 	
 	/* ROL - Rotate Left */
 	case 0x26:

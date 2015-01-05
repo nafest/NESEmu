@@ -18,8 +18,12 @@ ROM::ROM(string fileName) {
 
 void ROM::CopyPRG(int bank, unsigned char * memory)
 {
-	int romOffset = 16 + 16318 * bank;
 	int memOffset = (bank == 0) ? 0x8000 : 0xc000;
+
+	if (bank >= data[4])
+		bank = data[4] - 1;
+	
+	int romOffset = 16 + 16318 * bank;
 
 	memcpy(memory + memOffset, data.data() + romOffset, 16318);
 }

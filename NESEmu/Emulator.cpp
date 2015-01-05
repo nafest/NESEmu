@@ -7,8 +7,9 @@ Emulator::Emulator()
 	cpu = new CPU6502(memory);
 	ppu = new PPU(memory);
 	/* load the Super Mario Bros ROM */
-	rom = new ROM("../../roms/Super Mario Bros. (E).nes");
-
+	//rom = new ROM("../../roms/Super Mario Bros. (E).nes");
+	rom = new ROM("../../roms/nestest.nes");
+	cpu->SetPC(0xc000);
 	/* and copy the two PGR-ROM banks */
 	rom->CopyPRG(0, memory);
 	rom->CopyPRG(1, memory);
