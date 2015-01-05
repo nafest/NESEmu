@@ -136,6 +136,14 @@ void CPU6502::AND(unsigned char M)
 	SetNegative(A > 127);
 }
 
+void CPU6502::EOR(unsigned char M)
+{
+	A = A ^ M;
+
+	SetZero(A == 0);
+	SetNegative(A > 127);
+}
+
 void CPU6502::BIT(unsigned char M)
 {
 	unsigned char result = A & M;
@@ -185,11 +193,32 @@ void CPU6502::DEC(unsigned short addr)
 	memory[addr] = result;
 }
 
+void CPU6502::INC(unsigned short addr)
+{
+	unsigned char result = memory[addr] + 1;
+
+	SetZero(result == 0);
+	SetNegative(result > 127);
+
+	memory[addr] = result;
+}
+
 void CPU6502::ASL(unsigned char M)
 {
 	unsigned short result = M << 1;
 
 	SetCarry((M & (1 << 7)) != 0);
+	SetZero((result & 0xff) == 0);
+	SetNegative((result & (1 << 7)) != 0);
+
+	A = result && 0xff;
+}
+
+void CPU6502::LSR(unsigned char M)
+{
+	unsigned short result = M >> 1 | M << 7;
+
+	SetCarry((M & (1 << 0)) != 0);
 	SetZero((result & 0xff) == 0);
 	SetNegative((result & (1 << 7)) != 0);
 
@@ -301,6 +330,13 @@ int CPU6502::Step() {
 		return 5;
 
 	/* AND - logical AND */
+	case 0x29:
+		/* immediate addressing */
+		M = memory[PC];
+		PC++;
+		AND(M);
+		return 2;
+
 	case 0x25:
 		/* ZeroPage */
 		addr = memory[PC];
@@ -308,13 +344,6 @@ int CPU6502::Step() {
 		PC++;
 		AND(M);
 		return 3;
-
-	case 0x29:
-		/* immediate addressing */
-		M = memory[PC];
-		PC++;
-		AND(M);
-		return 2;
 
 	case 0x35:
 		/* ZeroPage, X */
@@ -379,10 +408,8 @@ int CPU6502::Step() {
 		return 5;
 
 	case 0x0a:
-		/* immediate addressing */
-		M = memory[PC];
-		PC++;
-		ASL(M);
+		/* Accumulator */
+		ASL(A);
 		return 2;
 
 	case 0x16:
@@ -423,81 +450,6 @@ int CPU6502::Step() {
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
 		memory[addr] = A;
-		break;
-
-	/* LDA - load Accumulator */
-	case 0xa9:
-		/* immediate addressing */
-		M = memory[PC];
-		PC++;
-		LDA(M);
-		break;
-
-	case 0xad:
-		/* absolute addressing */
-		addr = *((unsigned short*)(memory + PC));
-		PC += 2;
-		M = memory[addr];
-		LDA(M);
-		break;
-
-	case 0xbd:
-		/* absolute,X addressing */
-		addr = *((unsigned short*)(memory + PC));
-		PC += 2;
-		addr += X;
-		M = memory[addr];
-		LDA(M);
-		break;
-
-	/* LDX - load X Register */
-	case 0xa2:
-		/* immediate addressing */
-		M = memory[PC];
-		PC++;
-		LDX(M);
-		break;
-
-	case 0xa6:
-		/* ZeroPage addressing */
-		addr = memory[PC];
-		M = memory[addr];
-		PC++;
-		LDX(M);
-		break;
-
-	case 0xb6:
-		/* ZeroPage,Y addressing */
-		addr = memory[PC];
-		addr = (addr + Y) & 0xff;
-		M = memory[addr];
-		PC++;
-		LDX(M);
-		break;
-
-	/* LDY - load X Register */
-	case 0xa0:
-		/* immediate addressing */
-		M = memory[PC];
-		PC++;
-		LDY(M);
-		break;
-
-	case 0xa4:
-		/* ZeroPage addressing */
-		addr = memory[PC];
-		M = memory[addr];
-		PC++;
-		LDY(M);
-		break;
-
-	case 0xb4:
-		/* ZeroPage,X addressing */
-		addr = memory[PC];
-		addr = (addr + X) & 0xff;
-		M = memory[addr];
-		PC++;
-		LDY(M);
 		break;
 
 	/* TXS - Transfer X to Stack Pointer */
@@ -605,8 +557,8 @@ int CPU6502::Step() {
 	/* BRK - Force Interrupt */
 	case 0x00:
 		/* push PC and P to the stack */
-		Push(PC && 0xff);
-		Push((PC >> 8) && 0xff);
+		Push(PC & 0xff);
+		Push((PC >> 8) & 0xff);
 		Push(P);
 
 		SetBreak(true);
@@ -809,7 +761,354 @@ int CPU6502::Step() {
 		DEC(addr);
 		return 7;
 
-		/* unimplemented instruction */
+	/* DEX - Decrement X Register */
+	case 0xca:
+		X = X - 1;
+		SetZero(X == 0);
+		SetNegative(X > 127);
+		return 2;
+
+	/* DEY - Decrement Y Register */
+	case 0x88:
+		Y = Y - 1;
+		SetZero(Y == 0);
+		SetNegative(Y > 127);
+		return 2;
+
+	/* EOR - Exclusive OR */
+	case 0x45:
+		/* ZeroPage */
+		addr = memory[PC];
+		M = memory[addr];
+		PC++;
+		EOR(M);
+		return 3;
+
+	case 0x49:
+		/* immediate addressing */
+		M = memory[PC];
+		PC++;
+		EOR(M);
+		return 2;
+
+	case 0x55:
+		/* ZeroPage, X */
+		addr = memory[PC];
+		addr = (addr + X) & 0xff;
+		M = memory[addr];
+		PC++;
+		EOR(M);
+		return 4;
+
+	case 0x4d:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		M = memory[addr];
+		EOR(M);
+		return 4;
+
+	case 0x5d:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + X;
+		PC += 2;
+		M = memory[addr];
+		EOR(M);
+		return 4;
+
+	case 0x59:
+		/* absolute,Y addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + Y;
+		PC += 2;
+		M = memory[addr];
+		EOR(M);
+		return 4;
+
+	case 0x41:
+		/* indirect,X addressing */
+		addr = memory[PC];
+		addr = addr + X;
+		PC += 1;
+		M = memory[addr];
+		EOR(M);
+		return 6;
+
+	case 0x51:
+		/* indirect,Y addressing */
+		addr = memory[PC];
+		addr = memory[addr] + Y;
+		PC += 1;
+		M = memory[addr];
+		EOR(M);
+		return 5;
+
+	/* INC - Increment Memory */
+	case 0xe6:
+		/* ZeroPage */
+		addr = memory[PC];
+		PC++;
+		INC(addr);
+		return 5;
+
+	case 0xf6:
+		/* ZeroPage, X */
+		addr = memory[PC];
+		addr = (addr + X) & 0xff;
+		PC++;
+		INC(addr);
+		return 6;
+
+	case 0xee:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		INC(addr);
+		return 6;
+
+	case 0xfe:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + X;
+		PC += 2;
+		INC(addr);
+		return 7;
+
+	/* INX - Increment X Register */
+	case 0xe8:
+		X = X + 1;
+		SetZero(X == 0);
+		SetNegative(X > 127);
+		return 2;
+
+	/* INY - Increment Y Register */
+	case 0xc8:
+		Y = Y + 1;
+		SetZero(Y == 0);
+		SetNegative(Y > 127);
+		return 2;
+
+	/* JMP - Jump */
+	case 0x4c:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC = addr;
+		return 2;
+
+	case 0x6c:
+		/* indirect addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC = PC + addr + 2;
+		return 5;
+
+	/* JSR - Jump to Subroutine */
+	case 0x20:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		Push((PC + 1) & 0xff);
+		Push(((PC + 1) >> 8) & 0xff);
+		PC = addr;
+		return 6;
+
+	/* LDA - load Accumulator */
+	case 0xa9:
+		/* immediate addressing */
+		M = memory[PC];
+		PC++;
+		LDA(M);
+		return 2;
+
+	case 0xa5:
+		/* ZeroPage */
+		addr = memory[PC];
+		M = memory[addr];
+		PC++;
+		LDA(M);
+		return 3;
+
+	case 0xb5:
+		/* ZeroPage, X */
+		addr = memory[PC];
+		addr = (addr + X) & 0xff;
+		M = memory[addr];
+		PC++;
+		LDA(M);
+		return 4;
+
+	case 0xad:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		M = memory[addr];
+		LDA(M);
+		return 4;
+
+	case 0xbd:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + X;
+		PC += 2;
+		M = memory[addr];
+		LDA(M);
+		return 4;
+
+	case 0xb9:
+		/* absolute,Y addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + Y;
+		PC += 2;
+		M = memory[addr];
+		LDA(M);
+		return 4;
+
+	case 0xa1:
+		/* indirect,X addressing */
+		addr = memory[PC];
+		addr = addr + X;
+		PC += 1;
+		M = memory[addr];
+		LDA(M);
+		return 6;
+
+	case 0x3b1:
+		/* indirect,Y addressing */
+		addr = memory[PC];
+		addr = memory[addr] + Y;
+		PC += 1;
+		M = memory[addr];
+		LDA(M);
+		return 5;
+
+	/* LDX - load X Register */
+	case 0xa2:
+		/* immediate addressing */
+		M = memory[PC];
+		PC++;
+		LDX(M);
+		return 2;
+
+	case 0xa6:
+		/* ZeroPage addressing */
+		addr = memory[PC];
+		M = memory[addr];
+		PC++;
+		LDX(M);
+		return 3;
+
+	case 0xb6:
+		/* ZeroPage,Y addressing */
+		addr = memory[PC];
+		addr = (addr + Y) & 0xff;
+		M = memory[addr];
+		PC++;
+		LDX(M);
+		return 4;
+
+	case 0xae:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		M = memory[addr];
+		LDX(M);
+		return 4;
+
+	case 0xbe:
+		/* absolute,Y addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + Y;
+		PC += 2;
+		M = memory[addr];
+		LDX(M);
+		return 4;
+
+	/* LDY - load X Register */
+	case 0xa0:
+		/* immediate addressing */
+		M = memory[PC];
+		PC++;
+		LDY(M);
+		return 2;
+
+	case 0xa4:
+		/* ZeroPage addressing */
+		addr = memory[PC];
+		M = memory[addr];
+		PC++;
+		LDY(M);
+		return 3;
+
+	case 0xb4:
+		/* ZeroPage,X addressing */
+		addr = memory[PC];
+		addr = (addr + X) & 0xff;
+		M = memory[addr];
+		PC++;
+		LDY(M);
+		return 4;
+
+	case 0xac:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		M = memory[addr];
+		LDY(M);
+		return 4;
+
+	case 0xbc:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + X;
+		PC += 2;
+		M = memory[addr];
+		LDY(M);
+		return 4;
+
+	/* LSR - Logical Shift Right */
+	case 0x46:
+		/* ZeroPage */
+		addr = memory[PC];
+		M = memory[addr];
+		PC++;
+		LSR(M);
+		return 5;
+
+	case 0x4a:
+		/* Accumulator */
+		LSR(A);
+		return 2;
+
+	case 0x56:
+		/* ZeroPage, X */
+		addr = memory[PC];
+		addr = (addr + X) & 0xff;
+		M = memory[addr];
+		PC++;
+		LSR(M);
+		return 6;
+
+	case 0x4e:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		M = memory[addr];
+		LSR(M);
+		return 6;
+
+	case 0x5e:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + X;
+		PC += 2;
+		M = memory[addr];
+		LSR(M);
+		return 7;
+
+	/* NOP - No Operation */
+	case 0xea:
+		return 2;
+
+	/* unimplemented instruction */
 	default:
 		exit(-1);
 		break;

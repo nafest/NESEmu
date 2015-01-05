@@ -29,6 +29,9 @@ public:
 	void CPX(unsigned char M);
 	void CPY(unsigned char M);
 	void DEC(unsigned short addr);
+	void EOR(unsigned char M);
+	void INC(unsigned short addr);
+	void LSR(unsigned char M);
 	int Step();
 
 
