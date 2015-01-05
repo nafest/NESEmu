@@ -1,4 +1,7 @@
 #pragma once
+
+#include <SDL.h>
+
 class PPU
 {
 public:
@@ -12,5 +15,8 @@ private:
 	int currentCycle;
 
 	unsigned char* globalMemory;
+
+	SDL_Window*   window;
+	SDL_Surface*  screenSurface;
 };
 
