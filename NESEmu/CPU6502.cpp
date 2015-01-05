@@ -489,7 +489,7 @@ int CPU6502::Step() {
 	/* SEI - set intterupt disable */
 	case 0x78:
 		SetInterrupt(true);
-		break;
+		return 2;
 
 	/* STA - store accumulator */
 	case 0x85:
@@ -642,10 +642,15 @@ int CPU6502::Step() {
 	case 0x10:
 		offset8 = (char)memory[PC];
 		if (!GetNegative())
+		{
 			PC += 1 + offset8;
+			return 3;
+		}
 		else
+		{
 			PC++;
-		break;
+			return 2;
+		}
 
 	/* BCS - Branch if Carry Set */
 	case 0xb0:
@@ -1451,13 +1456,13 @@ int CPU6502::Step() {
 	case 0x40:
 		P = Pop();
 		PC = Pop();
-		PC = PC + (Pop() << 8);
+		PC = (PC << 8) + Pop();
 		return 6;
 
-	/* RTI - Return from Subroutine*/
+	/* RTS - Return from Subroutine*/
 	case 0x60:
 		PC = Pop();
-		PC = PC + (Pop() << 8);
+		PC = (PC<<8) + Pop();
 		PC++;
 		return 6;
 
@@ -1542,7 +1547,10 @@ int CPU6502::Step() {
 
 	/* unimplemented instruction */
 	default:
+		cout << "invalid instruction" << endl;
 		exit(-1);
 		break;
 	}
+
+	return 0;
 }

@@ -3,6 +3,7 @@
 
 Emulator::Emulator()
 {
+	int instrCnt = 0;
 	cpu = new CPU6502(memory);
 	ppu = new PPU(memory);
 	/* load the Super Mario Bros ROM */
@@ -12,8 +13,11 @@ Emulator::Emulator()
 	rom->CopyPRG(0, memory);
 	rom->CopyPRG(1, memory);
 	for (; ; ) {
-		cpu->Step();
-		ppu->Step();
+		int cpuCycles = cpu->Step();
+		for (int i = 0; i < 3 * cpuCycles; i++)
+			ppu->Step();
+
+		instrCnt++;
 	}
 }
 
