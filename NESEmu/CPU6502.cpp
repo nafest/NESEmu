@@ -128,6 +128,20 @@ void CPU6502::ADC(unsigned char M)
 	SetNegative(result > 127);
 }
 
+void CPU6502::SBC(unsigned char M)
+{
+	unsigned short result = A - M - (1 - GetCarry() ? 1 : 0);
+
+	SetCarry(result > 255);
+	SetZero(result == 0);
+	if ((((A ^ M) & 0x80) == 0) && (((A ^ result) & 0x80) != 0))
+		SetOverflow(true);
+	else
+		SetOverflow(false);
+	SetNegative(result > 127);
+}
+
+
 void CPU6502::AND(unsigned char M)
 {
 	A = A & M;
@@ -139,6 +153,14 @@ void CPU6502::AND(unsigned char M)
 void CPU6502::EOR(unsigned char M)
 {
 	A = A ^ M;
+
+	SetZero(A == 0);
+	SetNegative(A > 127);
+}
+
+void CPU6502::ORA(unsigned char M)
+{
+	A = A | M;
 
 	SetZero(A == 0);
 	SetNegative(A > 127);
@@ -223,6 +245,31 @@ void CPU6502::LSR(unsigned char M)
 	SetNegative((result & (1 << 7)) != 0);
 
 	A = result && 0xff;
+}
+
+void CPU6502::ROL(unsigned char M)
+{
+	unsigned char result = M << 1;
+
+	if (GetCarry())
+		result += 1;
+
+	SetCarry((M & (1 << 7)) != 0);
+
+	A = result;
+}
+
+
+void CPU6502::ROR(unsigned char M)
+{
+	unsigned char result = M >> 1;
+
+	if (GetCarry())
+		result += 128;
+
+	SetCarry((M & 1) != 0);
+
+	A = result;
 }
 
 void CPU6502::LDA(unsigned char M)
@@ -445,12 +492,104 @@ int CPU6502::Step() {
 		break;
 
 	/* STA - store accumulator */
+	case 0x85:
+		/* ZeroPage */
+		addr = memory[PC];
+		PC++;
+		memory[addr] = A;
+		return 3;
+
+	case 0x95:
+		/* ZeroPage, X */
+		addr = memory[PC]+X;
+		addr = addr & 0xff;
+		PC++;
+		memory[addr] = A;
+		return 3;
+
 	case 0x8d:
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
 		memory[addr] = A;
-		break;
+		return 4;
+
+	case 0x9d:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		memory[addr+X] = A;
+		return 5;
+
+	case 0x99:
+		/* absolute,Y addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		memory[addr + Y] = A;
+		return 5;
+
+	case 0x81:
+		/* indirect,X addressing */
+		addr = memory[PC];
+		addr = addr + X;
+		PC += 1;
+		memory[addr] = A;
+		return 6;
+
+	case 0x91:
+		/* indirect,Y addressing */
+		addr = memory[PC];
+		addr = memory[addr] + Y;
+		PC += 1;
+		memory[addr] = A;
+		return 6;
+
+	/* STX - store X Register */
+	case 0x86:
+		/* ZeroPage */
+		addr = memory[PC];
+		PC++;
+		memory[addr] = X;
+		return 3;
+
+	case 0x96:
+		/* ZeroPage, Y */
+		addr = memory[PC] + Y;
+		addr = addr & 0xff;
+		PC++;
+		memory[addr] = X;
+		return 4;
+
+	case 0x8e:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		memory[addr] = X;
+		return 4;
+
+	/* STY - store Y Register */
+	case 0x84:
+		/* ZeroPage */
+		addr = memory[PC];
+		PC++;
+		memory[addr] = Y;
+		return 3;
+
+	case 0x94:
+		/* ZeroPage, X */
+		addr = memory[PC] + X;
+		addr = addr & 0xff;
+		PC++;
+		memory[addr] = Y;
+		return 4;
+
+	case 0x8c:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		memory[addr] = Y;
+		return 4;
+
 
 	/* TXS - Transfer X to Stack Pointer */
 	case 0x9a:
@@ -1106,6 +1245,272 @@ int CPU6502::Step() {
 
 	/* NOP - No Operation */
 	case 0xea:
+		return 2;
+
+	/* ORA - Logical Inclusive OR */
+	case 0x05:
+		/* ZeroPage */
+		addr = memory[PC];
+		M = memory[addr];
+		PC++;
+		ORA(M);
+		return 3;
+
+	case 0x09:
+		/* immediate addressing */
+		M = memory[PC];
+		PC++;
+		ORA(M);
+		return 2;
+
+	case 0x15:
+		/* ZeroPage, X */
+		addr = memory[PC];
+		addr = (addr + X) & 0xff;
+		M = memory[addr];
+		PC++;
+		ORA(M);
+		return 4;
+
+	case 0x0d:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		M = memory[addr];
+		ORA(M);
+		return 4;
+
+	case 0x1d:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + X;
+		PC += 2;
+		M = memory[addr];
+		ORA(M);
+		return 4;
+
+	case 0x19:
+		/* absolute,Y addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + Y;
+		PC += 2;
+		M = memory[addr];
+		ORA(M);
+		return 4;
+
+	case 0x01:
+		/* indirect,X addressing */
+		addr = memory[PC];
+		addr = addr + X;
+		PC += 1;
+		M = memory[addr];
+		ORA(M);
+		return 6;
+
+	case 0x11:
+		/* indirect,Y addressing */
+		addr = memory[PC];
+		addr = memory[addr] + Y;
+		PC += 1;
+		M = memory[addr];
+		ORA(M);
+		return 5;
+
+	/* PHA Push Accumulator */
+	case 0x48:
+		Push(A);
+		return 3;
+
+	/* PHP Push Processor Status */
+	case 0x08:
+		Push(P);
+		return 3;
+
+	/* PLA Pull Accumulator */
+	case 0x68:
+		A = Pop();
+		SetZero(A == 0);
+		SetNegative(A > 127);
+		return 4;
+
+	/* PLP Pull Processor Status */
+	case 0x28:
+		P = Pop();
+		return 4;
+
+	
+	/* ROL - Rotate Left */
+	case 0x26:
+		/* ZeroPage */
+		addr = memory[PC];
+		M = memory[addr];
+		PC++;
+		ROL(M);
+		return 5;
+
+	case 0x2a:
+		/* Accumulator */
+		ROL(A);
+		return 2;
+
+	case 0x36:
+		/* ZeroPage, X */
+		addr = memory[PC];
+		addr = (addr + X) & 0xff;
+		M = memory[addr];
+		PC++;
+		ROL(M);
+		return 6;
+
+	case 0x2e:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		M = memory[addr];
+		ROL(M);
+		return 6;
+
+	case 0x3e:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + X;
+		PC += 2;
+		M = memory[addr];
+		ROL(M);
+		return 7;
+
+
+	/* ROR - Rotate Right */
+	case 0x66:
+		/* ZeroPage */
+		addr = memory[PC];
+		M = memory[addr];
+		PC++;
+		ROR(M);
+		return 5;
+
+	case 0x6a:
+		/* Accumulator */
+		ROR(A);
+		return 2;
+
+	case 0x76:
+		/* ZeroPage, X */
+		addr = memory[PC];
+		addr = (addr + X) & 0xff;
+		M = memory[addr];
+		PC++;
+		ROR(M);
+		return 6;
+
+	case 0x6e:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		M = memory[addr];
+		ROR(M);
+		return 6;
+
+	case 0x7e:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + X;
+		PC += 2;
+		M = memory[addr];
+		ROR(M);
+		return 7;
+
+	/* RTI - Return from Interrupt*/
+	case 0x40:
+		P = Pop();
+		PC = Pop();
+		PC = PC + (Pop() << 8);
+		return 6;
+
+	/* RTI - Return from Subroutine*/
+	case 0x60:
+		PC = Pop();
+		PC = PC + (Pop() << 8);
+		PC++;
+		return 6;
+
+	/* SBC - Subtract with carry */
+	case 0xe5:
+		/* ZeroPage */
+		addr = memory[PC];
+		M = memory[addr];
+		PC++;
+		SBC(M);
+		return 3;
+
+	case 0xe9:
+		/* immediate addressing */
+		M = memory[PC];
+		PC++;
+		SBC(M);
+		return 2;
+
+	case 0xf5:
+		/* ZeroPage, X */
+		addr = memory[PC];
+		addr = (addr + X) & 0xff;
+		M = memory[addr];
+		PC++;
+		SBC(M);
+		return 4;
+
+	case 0xed:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		M = memory[addr];
+		SBC(M);
+		return 4;
+
+	case 0xfd:
+		/* absolute,X addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + X;
+		PC += 2;
+		M = memory[addr];
+		SBC(M);
+		return 4;
+
+	case 0xf9:
+		/* absolute,Y addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + Y;
+		PC += 2;
+		M = memory[addr];
+		SBC(M);
+		return 4;
+
+	case 0xe1:
+		/* indirect,X addressing */
+		addr = memory[PC];
+		addr = addr + X;
+		PC += 1;
+		M = memory[addr];
+		SBC(M);
+		return 6;
+
+	case 0xf1:
+		/* indirect,Y addressing */
+		addr = memory[PC];
+		addr = memory[addr] + Y;
+		PC += 1;
+		M = memory[addr];
+		SBC(M);
+		return 5;
+
+	/* SEC - Set Carry Flag */
+	case 0x38:
+		SetCarry(true);
+		return 2;
+
+	/* SED - Set Decimal Flag */
+	case 0xf8:
+		SetDecimal(true);
 		return 2;
 
 	/* unimplemented instruction */

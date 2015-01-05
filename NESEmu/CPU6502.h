@@ -32,6 +32,10 @@ public:
 	void EOR(unsigned char M);
 	void INC(unsigned short addr);
 	void LSR(unsigned char M);
+	void ORA(unsigned char M);
+	void ROL(unsigned char M);
+	void ROR(unsigned char M);
+	void SBC(unsigned char M);
 	int Step();
 
 
