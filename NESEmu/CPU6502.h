@@ -8,17 +8,27 @@ public:
 	void SetCarry(bool value);
 	bool GetCarry();
 	void SetZero(bool value);
+	bool GetZero();
+	void SetBreak(bool value);
 	void SetInterrupt(bool value);
 	void SetDecimal(bool value);
 	void SetNegative(bool value);
 	bool GetNegative();
 	void SetOverflow(bool value);
+	bool GetOverflow();
+	void Push(unsigned char value);
+	unsigned char Pop();
 	void ADC(unsigned char M);
 	void AND(unsigned char M);
+	void ASL(unsigned char M);
+	void BIT(unsigned char M);
 	void LDA(unsigned char M);
 	void LDX(unsigned char M);
 	void LDY(unsigned char M);
 	void CMP(unsigned char M);
+	void CPX(unsigned char M);
+	void CPY(unsigned char M);
+	void DEC(unsigned short addr);
 	int Step();
 
 
