@@ -590,13 +590,40 @@ int CPU6502::Step() {
 		memory[addr] = Y;
 		return 4;
 
+	/* TAX - Transfer A to X */
+	case 0xaa:
+		X = A;
+		return 2;
+
+	/* TAX - Transfer A to Y */
+	case 0xa8:
+		Y = A;
+		return 2;
+
+	/* TSX - Transfer Stack Pointer to X */
+	case 0xba:
+		X = SP;
+		return 2;
+
+	/* TXA - Transfer X to A */
+	case 0x8a:
+		A = X;
+		SetZero(A == 0);
+		SetNegative(A > 127);
+		return 2;
 
 	/* TXS - Transfer X to Stack Pointer */
 	case 0x9a:
 		SP = X;
-		break;
+		return 2;
 
-	
+	/* TYA - Transfer S to X */
+	case 0x98:
+		A = Y;
+		SetZero(A == 0);
+		SetNegative(A > 127);
+		return 2;
+
 	/* BCC - Branch if Carry Clear */
 	case 0x90:
 		offset8 = (char)memory[PC];
