@@ -9,8 +9,10 @@ public:
 	~PPU();
 
 	void Step();
+	const unsigned char* GetMemoryPtr() const;
 
 private:
+	unsigned char memory[16 * 1024];
 	int currentScanLine;
 	int currentCycle;
 

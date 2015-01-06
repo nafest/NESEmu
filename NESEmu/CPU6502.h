@@ -19,6 +19,7 @@ public:
 	bool GetOverflow();
 	void Push(unsigned char value);
 	unsigned char Pop();
+	void Store(unsigned short addr, unsigned char value);
 	void ADC(unsigned char M);
 	void AND(unsigned char M);
 	void ASL(unsigned char M);

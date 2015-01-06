@@ -12,6 +12,7 @@ public:
 	ROM(string fileName);
 
 	void CopyPRG(int bank, unsigned char *memory);
+	void CopyCHR(unsigned char *memory);
 
 	~ROM();
 

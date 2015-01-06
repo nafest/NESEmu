@@ -18,6 +18,11 @@ PPU::PPU(unsigned char *memory) {
 PPU::~PPU() {
 }
 
+const unsigned char * PPU::GetMemoryPtr() const
+{
+	return &(memory[0]);
+}
+
 void PPU::Step() {
 
 	if (currentScanLine == 261) {

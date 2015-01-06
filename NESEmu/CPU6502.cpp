@@ -133,6 +133,40 @@ unsigned char CPU6502::Pop() {
 	return memory[0x100 + SP];
 }
 
+void CPU6502::Store(unsigned short addr, unsigned char value)
+{
+	memory[addr] = value;
+
+	if (0x2000 == addr) {
+		/* write to PPU ctrl register 1 */
+		cout << "PPU ctrl register 1" << endl;
+	}
+	if (0x2001 == addr) {
+		/* write to PPU ctrl register 2 */
+		cout << "PPU ctrl register 2" << endl;
+	}
+	if (0x2003 == addr) {
+		/* write to SPR Ram address register */
+		cout << "SPR Ram address register" << endl;
+	}
+	if (0x2004 == addr) {
+		/* write to SPR Ram I/O register */
+		cout << "SPR Ram I/O register" << endl;
+	}
+	if (0x2005 == addr) {
+		/* write to VRAM Ram address register 1*/
+		cout << "SPR VRAM address register 1" << endl;
+	}
+	if (0x2006 == addr) {
+		/* write to VRAM Ram address register 2*/
+		cout << "SPR VRAM address register 2" << endl;
+	}
+	if (0x2007 == addr) {
+		/* write to VRAM Ram I/O register*/
+		cout << "SPR VRAM I/O register" << endl;
+	}
+}
+
 void CPU6502::ADC(unsigned char M)
 {
 	unsigned short result = A + M + (GetCarry() ? 1 : 0);
@@ -528,7 +562,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage */
 		addr = memory[PC];
 		PC++;
-		memory[addr] = A;
+		Store(addr, A);
 		return 3;
 
 	case 0x95:
@@ -536,28 +570,28 @@ int CPU6502::OneStep() {
 		addr = memory[PC]+X;
 		addr = addr & 0xff;
 		PC++;
-		memory[addr] = A;
+		Store(addr, A);
 		return 3;
 
 	case 0x8d:
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		memory[addr] = A;
+		Store(addr, A);
 		return 4;
 
 	case 0x9d:
 		/* absolute,X addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		memory[addr+X] = A;
+		Store(addr + X, A);
 		return 5;
 
 	case 0x99:
 		/* absolute,Y addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		memory[addr + Y] = A;
+		Store(addr + Y, A);
 		return 5;
 
 	case 0x81:
@@ -565,7 +599,7 @@ int CPU6502::OneStep() {
 		addr = memory[PC];
 		addr = addr + X;
 		PC += 1;
-		memory[addr] = A;
+		Store(addr, A);
 		return 6;
 
 	case 0x91:
@@ -573,7 +607,7 @@ int CPU6502::OneStep() {
 		addr = memory[PC];
 		addr = memory[addr] + Y;
 		PC += 1;
-		memory[addr] = A;
+		Store(addr, A);
 		return 6;
 
 	/* STX - store X Register */
@@ -581,7 +615,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage */
 		addr = memory[PC];
 		PC++;
-		memory[addr] = X;
+		Store(addr, X);
 		return 3;
 
 	case 0x96:
@@ -589,14 +623,14 @@ int CPU6502::OneStep() {
 		addr = memory[PC] + Y;
 		addr = addr & 0xff;
 		PC++;
-		memory[addr] = X;
+		Store(addr, X);
 		return 4;
 
 	case 0x8e:
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		memory[addr] = X;
+		Store(addr, X);
 		return 4;
 
 	/* STY - store Y Register */
@@ -604,7 +638,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage */
 		addr = memory[PC];
 		PC++;
-		memory[addr] = Y;
+		Store(addr, Y);
 		return 3;
 
 	case 0x94:
@@ -612,14 +646,14 @@ int CPU6502::OneStep() {
 		addr = memory[PC] + X;
 		addr = addr & 0xff;
 		PC++;
-		memory[addr] = Y;
+		Store(addr, Y);
 		return 4;
 
 	case 0x8c:
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		memory[addr] = Y;
+		Store(addr, Y);
 		return 4;
 
 	/* TAX - Transfer A to X */

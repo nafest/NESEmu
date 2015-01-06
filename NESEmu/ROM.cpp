@@ -28,6 +28,12 @@ void ROM::CopyPRG(int bank, unsigned char * memory)
 	memcpy(memory + memOffset, data.data() + romOffset, 16318);
 }
 
+void ROM::CopyCHR(unsigned char * memory)
+{
+	int romOffset = 16 + 16318 * data[4];
+
+	memcpy(memory, data.data() + romOffset, 8196);
+}
 
 ROM::~ROM()
 {
