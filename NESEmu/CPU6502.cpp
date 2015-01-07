@@ -4,9 +4,10 @@
 using namespace std;
 
 
-CPU6502::CPU6502(unsigned char *memory)
+CPU6502::CPU6502(unsigned char *memory, PPU *ppu)
 {
 	this->memory = memory;
+	this->ppu = ppu;
 	PC = 0x8000;
 	SP = 0xfd;
 	A = 0;
@@ -133,36 +134,51 @@ unsigned char CPU6502::Pop() {
 	return memory[0x100 + SP];
 }
 
+unsigned char CPU6502::Read(unsigned short addr)
+{
+	if (0x2002 == addr)
+		return ppu->ReadStatus();
+	else
+		return memory[addr];
+}
+
 void CPU6502::Store(unsigned short addr, unsigned char value)
 {
 	memory[addr] = value;
 
 	if (0x2000 == addr) {
 		/* write to PPU ctrl register 1 */
+		ppu->WriteCtrl1(value);
 		cout << "PPU ctrl register 1" << endl;
 	}
 	if (0x2001 == addr) {
 		/* write to PPU ctrl register 2 */
+		ppu->WriteCtrl2(value);
 		cout << "PPU ctrl register 2" << endl;
 	}
 	if (0x2003 == addr) {
 		/* write to SPR Ram address register */
+		ppu->WriteSPRAddress(value);
 		cout << "SPR Ram address register" << endl;
 	}
 	if (0x2004 == addr) {
 		/* write to SPR Ram I/O register */
+		ppu->WriteSPRIO(value);
 		cout << "SPR Ram I/O register" << endl;
 	}
 	if (0x2005 == addr) {
 		/* write to VRAM Ram address register 1*/
+		ppu->WriteVRAMAddress1(value);
 		cout << "SPR VRAM address register 1" << endl;
 	}
 	if (0x2006 == addr) {
 		/* write to VRAM Ram address register 2*/
+		ppu->WriteVRAMAddress2(value);
 		cout << "SPR VRAM address register 2" << endl;
 	}
 	if (0x2007 == addr) {
 		/* write to VRAM Ram I/O register*/
+		ppu->WriteVRAMIO(value);
 		cout << "SPR VRAM I/O register" << endl;
 	}
 }

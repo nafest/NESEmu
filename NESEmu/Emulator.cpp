@@ -4,8 +4,8 @@
 Emulator::Emulator()
 {
 	int instrCnt = 0;
-	cpu = new CPU6502(memory);
 	ppu = new PPU(memory);
+	cpu = new CPU6502(memory,ppu);
 	/* load the Super Mario Bros ROM */
 	rom = new ROM("../../roms/Super Mario Bros. (E).nes");
 	//rom = new ROM("../../roms/nestest.nes");

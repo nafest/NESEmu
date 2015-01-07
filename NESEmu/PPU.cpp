@@ -23,21 +23,52 @@ const unsigned char * PPU::GetMemoryPtr() const
 	return &(memory[0]);
 }
 
+void PPU::WriteCtrl1(unsigned char value)
+{}
+
+void PPU::WriteCtrl2(unsigned char value)
+{}
+
+void PPU::WriteSPRAddress(unsigned char value)
+{}
+
+void PPU::WriteSPRIO(unsigned char value)
+{}
+
+void PPU::WriteVRAMAddress1(unsigned char value)
+{}
+
+void PPU::WriteVRAMAddress2(unsigned char value)
+{}
+
+void PPU::WriteVRAMIO(unsigned char value)
+{}
+
+unsigned char PPU::ReadStatus()
+{
+	return status;
+}
+
 void PPU::Step() {
 
 	if (currentScanLine == 261) {
 		/* pre-render */
-		globalMemory[0x2002] = 0;
+		/* unset status bit 7 */
+		status &= (0xff ^ (1 << 7));
 	} else if (currentScanLine >= 0 && currentScanLine <= 239) {
-		globalMemory[0x2002] = 0;
+		/* unset status bit 7 */
+		status &= (0xff ^ (1 << 7));
 	}
 	else if (currentScanLine == 240) {
-		globalMemory[0x2002] = 0;
+		/* unset status bit 7*/
+		status &= (0xff ^ (1 << 7));
 	}
 	else if (currentScanLine >= 240 && currentScanLine < 261)
 	{
-		globalMemory[0x2002] = 1 << 7;
+		status |= 1 << 7;
 	}
+
+	globalMemory[0x2002] = status;
 
 	currentCycle += 1;
 

@@ -1,8 +1,11 @@
 #pragma once
+
+#include "PPU.h"
+
 class CPU6502
 {
 public:
-	CPU6502(unsigned char *memory);
+	CPU6502(unsigned char *memory, PPU *ppu);
 	~CPU6502();
 
 	void PrintState();
@@ -17,9 +20,13 @@ public:
 	bool GetNegative();
 	void SetOverflow(bool value);
 	bool GetOverflow();
+	
 	void Push(unsigned char value);
 	unsigned char Pop();
+
+	unsigned char Read(unsigned short addr);
 	void Store(unsigned short addr, unsigned char value);
+	
 	void ADC(unsigned char M);
 	void AND(unsigned char M);
 	void ASL(unsigned char M);
@@ -51,6 +58,7 @@ private:
 	unsigned char  P;    /* processor status */
 
 	unsigned char  *memory;  /* pointer to memory */
+	PPU            *ppu;
 
 	long cycles;
 };
