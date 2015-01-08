@@ -279,22 +279,22 @@ void CPU6502::CPY(unsigned char M)
 
 void CPU6502::DEC(unsigned short addr)
 {
-	unsigned char result = memory[addr] - 1;
+	unsigned char result = Read(addr) - 1;
 
 	SetZero(result == 0);
 	SetNegative(result > 127);
 
-	memory[addr] = result;
+	Store(addr, result);
 }
 
 void CPU6502::INC(unsigned short addr)
 {
-	unsigned char result = memory[addr] + 1;
+	unsigned char result = Read(addr) + 1;
 
 	SetZero(result == 0);
 	SetNegative(result > 127);
 
-	memory[addr] = result;
+	Store(addr, result);
 }
 
 void CPU6502::ASL(unsigned char M)
@@ -393,7 +393,7 @@ int CPU6502::OneStep() {
 	case 0x65:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		ADC(M);
 		return 3;
@@ -409,7 +409,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		ADC(M);
 		return 4;
@@ -418,7 +418,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr); 
 		ADC(M);
 		return 4;
 
@@ -427,7 +427,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		ADC(M);
 		return 4;
 
@@ -436,7 +436,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + Y;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		ADC(M);
 		return 4;
 
@@ -445,16 +445,16 @@ int CPU6502::OneStep() {
 		addr = memory[PC];
 		addr = addr + X;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		ADC(M);
 		return 6;
 
 	case 0x71:
 		/* indirect,Y addressing */
 		addr = memory[PC];
-		addr = memory[addr] + Y;
+		addr = Read(addr) + Y;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		ADC(M);
 		return 5;
 
@@ -469,7 +469,7 @@ int CPU6502::OneStep() {
 	case 0x25:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		AND(M);
 		return 3;
@@ -478,7 +478,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		AND(M);
 		return 4;
@@ -487,7 +487,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		AND(M);
 		return 4;
 
@@ -496,7 +496,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		AND(M);
 		return 4;
 
@@ -505,7 +505,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + Y;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		AND(M);
 		return 4;
 
@@ -514,16 +514,16 @@ int CPU6502::OneStep() {
 		addr = memory[PC];
 		addr = addr + X;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		AND(M);
 		return 6;
 
 	case 0x31:
 		/* indirect,Y addressing */
 		addr = memory[PC];
-		addr = memory[addr] + Y;
+		addr = Read(addr) + Y;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		AND(M);
 		return 5;
 
@@ -531,7 +531,7 @@ int CPU6502::OneStep() {
 	case 0x06:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		ASL(M);
 		return 5;
@@ -545,7 +545,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		ASL(M);
 		return 6;
@@ -554,7 +554,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		ASL(M);
 		return 6;
 
@@ -563,7 +563,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		ASL(M);
 		return 7;
 
@@ -621,7 +621,7 @@ int CPU6502::OneStep() {
 	case 0x91:
 		/* indirect,Y addressing */
 		addr = memory[PC];
-		addr = memory[addr] + Y;
+		addr = Read(addr) + Y;
 		PC += 1;
 		Store(addr, A);
 		return 6;
@@ -766,7 +766,7 @@ int CPU6502::OneStep() {
 	case 0x24:
 		/* ZeroPage addressing */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		BIT(M);
 		return 3;
@@ -775,7 +775,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		BIT(M);
 		return 4;
 
@@ -877,7 +877,7 @@ int CPU6502::OneStep() {
 	case 0xc5:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		CMP(M);
 		return 3;
@@ -886,7 +886,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		CMP(M);
 		return 4;
@@ -895,7 +895,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		CMP(M);
 		return 4;
 
@@ -904,7 +904,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		CMP(M);
 		return 4;
 
@@ -913,7 +913,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + Y;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		CMP(M);
 		return 4;
 
@@ -922,16 +922,16 @@ int CPU6502::OneStep() {
 		addr = memory[PC];
 		addr = addr + X;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		CMP(M);
 		return 6;
 
 	case 0xd1:
 		/* indirect,Y addressing */
 		addr = memory[PC];
-		addr = memory[addr] + Y;
+		addr = Read(addr) + Y;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		CMP(M);
 		return 5;
 
@@ -946,7 +946,7 @@ int CPU6502::OneStep() {
 	case 0xe4:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		CPX(M);
 		return 3;
@@ -955,7 +955,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		CPX(M);
 		return 4;
 
@@ -970,7 +970,7 @@ int CPU6502::OneStep() {
 	case 0xc4:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		CPY(M);
 		return 3;
@@ -979,7 +979,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		CPY(M);
 		return 4;
 
@@ -1032,7 +1032,7 @@ int CPU6502::OneStep() {
 	case 0x45:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		EOR(M);
 		return 3;
@@ -1048,7 +1048,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		EOR(M);
 		return 4;
@@ -1057,7 +1057,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		EOR(M);
 		return 4;
 
@@ -1066,7 +1066,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		EOR(M);
 		return 4;
 
@@ -1075,7 +1075,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + Y;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		EOR(M);
 		return 4;
 
@@ -1084,16 +1084,16 @@ int CPU6502::OneStep() {
 		addr = memory[PC];
 		addr = addr + X;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		EOR(M);
 		return 6;
 
 	case 0x51:
 		/* indirect,Y addressing */
 		addr = memory[PC];
-		addr = memory[addr] + Y;
+		addr = Read(addr) + Y;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		EOR(M);
 		return 5;
 
@@ -1175,7 +1175,7 @@ int CPU6502::OneStep() {
 	case 0xa5:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		LDA(M);
 		return 3;
@@ -1184,7 +1184,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		LDA(M);
 		return 4;
@@ -1193,7 +1193,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		LDA(M);
 		return 4;
 
@@ -1202,7 +1202,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		LDA(M);
 		return 4;
 
@@ -1211,7 +1211,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + Y;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		LDA(M);
 		return 4;
 
@@ -1220,16 +1220,16 @@ int CPU6502::OneStep() {
 		addr = memory[PC];
 		addr = addr + X;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		LDA(M);
 		return 6;
 
 	case 0x3b1:
 		/* indirect,Y addressing */
 		addr = memory[PC];
-		addr = memory[addr] + Y;
+		addr = Read(addr) + Y;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		LDA(M);
 		return 5;
 
@@ -1244,7 +1244,7 @@ int CPU6502::OneStep() {
 	case 0xa6:
 		/* ZeroPage addressing */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		LDX(M);
 		return 3;
@@ -1253,7 +1253,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage,Y addressing */
 		addr = memory[PC];
 		addr = (addr + Y) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		LDX(M);
 		return 4;
@@ -1262,7 +1262,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		LDX(M);
 		return 4;
 
@@ -1271,7 +1271,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + Y;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		LDX(M);
 		return 4;
 
@@ -1286,7 +1286,7 @@ int CPU6502::OneStep() {
 	case 0xa4:
 		/* ZeroPage addressing */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		LDY(M);
 		return 3;
@@ -1295,7 +1295,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage,X addressing */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		LDY(M);
 		return 4;
@@ -1304,7 +1304,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		LDY(M);
 		return 4;
 
@@ -1313,7 +1313,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		LDY(M);
 		return 4;
 
@@ -1321,7 +1321,7 @@ int CPU6502::OneStep() {
 	case 0x46:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		LSR(M);
 		return 5;
@@ -1335,7 +1335,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		LSR(M);
 		return 6;
@@ -1344,7 +1344,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		LSR(M);
 		return 6;
 
@@ -1353,7 +1353,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		LSR(M);
 		return 7;
 
@@ -1365,7 +1365,7 @@ int CPU6502::OneStep() {
 	case 0x05:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		ORA(M);
 		return 3;
@@ -1381,7 +1381,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		ORA(M);
 		return 4;
@@ -1390,7 +1390,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		ORA(M);
 		return 4;
 
@@ -1399,7 +1399,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		ORA(M);
 		return 4;
 
@@ -1408,7 +1408,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + Y;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		ORA(M);
 		return 4;
 
@@ -1417,16 +1417,16 @@ int CPU6502::OneStep() {
 		addr = memory[PC];
 		addr = addr + X;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		ORA(M);
 		return 6;
 
 	case 0x11:
 		/* indirect,Y addressing */
 		addr = memory[PC];
-		addr = memory[addr] + Y;
+		addr = Read(addr) + Y;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		ORA(M);
 		return 5;
 
@@ -1458,7 +1458,7 @@ int CPU6502::OneStep() {
 	case 0x26:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		ROL(M);
 		return 5;
@@ -1472,7 +1472,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		ROL(M);
 		return 6;
@@ -1481,7 +1481,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		ROL(M);
 		return 6;
 
@@ -1490,7 +1490,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		ROL(M);
 		return 7;
 
@@ -1499,7 +1499,7 @@ int CPU6502::OneStep() {
 	case 0x66:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		ROR(M);
 		return 5;
@@ -1513,7 +1513,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		ROR(M);
 		return 6;
@@ -1522,7 +1522,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		ROR(M);
 		return 6;
 
@@ -1531,7 +1531,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		ROR(M);
 		return 7;
 
@@ -1553,7 +1553,7 @@ int CPU6502::OneStep() {
 	case 0xe5:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		SBC(M);
 		return 3;
@@ -1569,7 +1569,7 @@ int CPU6502::OneStep() {
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = memory[addr];
+		M = Read(addr);
 		PC++;
 		SBC(M);
 		return 4;
@@ -1578,7 +1578,7 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		SBC(M);
 		return 4;
 
@@ -1587,7 +1587,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		SBC(M);
 		return 4;
 
@@ -1596,7 +1596,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + Y;
 		PC += 2;
-		M = memory[addr];
+		M = Read(addr);
 		SBC(M);
 		return 4;
 
@@ -1605,16 +1605,16 @@ int CPU6502::OneStep() {
 		addr = memory[PC];
 		addr = addr + X;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		SBC(M);
 		return 6;
 
 	case 0xf1:
 		/* indirect,Y addressing */
 		addr = memory[PC];
-		addr = memory[addr] + Y;
+		addr = Read(addr) + Y;
 		PC += 1;
-		M = memory[addr];
+		M = Read(addr);
 		SBC(M);
 		return 5;
 

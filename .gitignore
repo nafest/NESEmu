@@ -48,6 +48,7 @@ NESEmu/x64
 NESEmu/Debug
 *.filters
 *.user
+*.suo
 *.v12.suo
 *.opensdf
 *.sdf
