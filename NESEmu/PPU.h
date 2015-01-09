@@ -25,6 +25,8 @@ public:
 private:
 	unsigned char memory[16 * 1024];
 
+	unsigned char palette[3 * 64];
+
 	unsigned char ctrl1;
 	unsigned char ctrl2;
 	unsigned char status;
@@ -35,6 +37,7 @@ private:
 	unsigned char* globalMemory;
 
 	SDL_Window*   window;
+	SDL_Renderer* renderer;
 	SDL_Surface*  screenSurface;
 };
 
