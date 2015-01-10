@@ -1,7 +1,6 @@
 #include "PPU.h"
 #include <SDL.h>
 
-
 PPU::PPU(unsigned char *memory) {
 	currentScanLine = 261;
 	currentCycle = 0;
@@ -120,6 +119,36 @@ unsigned char PPU::ReadStatus()
 	return status;
 }
 
+Tile PPU::fetchTile(int nameTableIdx, int x, int y)
+{
+	Tile     tile;
+	unsigned short baseAddress = 0x2000 + nameTableIdx*0x400;
+    unsigned short tileAddress = baseAddress + y * 32 + x;
+	unsigned short patternAddress = memory[tileAddress] + 0x0000;
+
+	for (int i = 0; i < 8; i++)
+	{
+		tile.lowBits[i] = memory[patternAddress + i];
+		tile.highBits[i] = memory[patternAddress + 8 + i];
+	}
+
+	unsigned short attrAddress = baseAddress + 0x3c0 + (y / 4) * 8 + (x / 4);
+
+	unsigned short attributes = memory[attrAddress];
+
+	int square = 0;
+
+	if (y % 4 > 1)
+		square += 2;
+	if (x % 4 > 0)
+		square += 1;
+
+	/* attr contains the bits in 33221100 */
+	tile.attBits = (attributes >> (2 * square)) & 0x3;
+
+	return tile;
+}
+
 void PPU::Step() {
 
 	if (currentScanLine == 261) {
@@ -132,22 +161,18 @@ void PPU::Step() {
 		if (currentCycle == 0)
 		{
 			/* get the first tile in L0 */
-			/* L0 has 32x30 bytes */
-			unsigned char tile = memory[0x2000];
-			unsigned char attributes = memory[0x23c0];
-			/* the tile consist of 16 bytes */
-			/* get the first line */
+			Tile tile = fetchTile(0, 0, 0);
 
-			unsigned char attbits = (attributes & 0x03) << 2;
+			unsigned char attBits = tile.attBits << 2;
 
 			for (int j = 0; j < 8; j++)
 			{
-				unsigned char tlow = memory[16 * tile + 0 + j];
-				unsigned char thigh = memory[16 * tile + 8 + j];
+				unsigned char tlow = tile.lowBits[j];
+				unsigned char thigh = tile.highBits[j];
 				for (int i = 0; i < 8; i++)
 				{
 					unsigned char pdx = ((tlow >> (7 - i)) & 1) | (((thigh >> (7 - i)) & 1) << 1);
-					pdx |= attbits;
+					pdx |= attBits;
 
 					unsigned char color = memory[0x3f00 + pdx];
 

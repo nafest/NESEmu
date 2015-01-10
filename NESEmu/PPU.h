@@ -2,6 +2,14 @@
 
 #include <SDL.h>
 
+class Tile
+{
+public:
+	unsigned char lowBits[8];
+	unsigned char highBits[8];
+	unsigned char attBits;
+};
+
 class PPU
 {
 public:
@@ -17,6 +25,8 @@ public:
 	void WriteVRAMAddress1(unsigned char value);
 	void WriteVRAMAddress2(unsigned char value);
 	void WriteVRAMIO(unsigned char value);
+
+	Tile fetchTile(int nameTableIdx, int x, int y);
 
 	unsigned char ReadStatus();
 
