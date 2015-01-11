@@ -14,6 +14,8 @@ PPU::PPU(unsigned char *memory) {
 
 	SDL_CreateWindowAndRenderer(256, 240, 0, &window, &renderer);
 
+	vramAdress = 0x0;
+	vramAdressLatch = true;
 
 	unsigned char myPal[3 * 64] = { 124, 124, 124,
 		0, 0, 252,
@@ -109,10 +111,25 @@ void PPU::WriteVRAMAddress1(unsigned char value)
 {}
 
 void PPU::WriteVRAMAddress2(unsigned char value)
-{}
+{
+	if (vramAdressLatch)
+	{
+		/* clear the upper 8 bits*/
+		vramAdress &= 0x00ff;
+		vramAdress |= (value << 8);
+	}
+	else {
+		vramAdress &= 0xff00;
+		vramAdress |= value;
+	}
+	vramAdressLatch = !vramAdressLatch;
+}
 
 void PPU::WriteVRAMIO(unsigned char value)
-{}
+{
+	memory[vramAdress] = value;
+	vramAdress++;
+}
 
 unsigned char PPU::ReadStatus()
 {
@@ -158,29 +175,34 @@ void PPU::Step() {
 	} else if (currentScanLine >= 0 && currentScanLine <= 239) {
 		/* unset status bit 7 */
 		status &= (0xff ^ (1 << 7));
-		if (currentCycle == 0)
+		if (currentScanLine == 239 && currentCycle == 0)
 		{
-			/* get the first tile in L0 */
-			Tile tile = fetchTile(0, 0, 0);
-
-			unsigned char attBits = tile.attBits << 2;
-
-			for (int j = 0; j < 8; j++)
-			{
-				unsigned char tlow = tile.lowBits[j];
-				unsigned char thigh = tile.highBits[j];
-				for (int i = 0; i < 8; i++)
+			for (int tx = 0; tx < 32; tx++)
+				for (int ty = 0; ty < 30; ty++)
 				{
-					unsigned char pdx = ((tlow >> (7 - i)) & 1) | (((thigh >> (7 - i)) & 1) << 1);
-					pdx |= attBits;
+					/* get the first tile in L0 */
+					Tile tile = fetchTile(0, 0, 0);
 
-					unsigned char color = memory[0x3f00 + pdx];
+					unsigned char attBits = tile.attBits << 2;
 
-					SDL_SetRenderDrawColor(renderer, palette[3 * color], palette[3 * color + 1], palette[3 * color + 2], 255);
-					SDL_RenderDrawPoint(renderer, i, j);
+					for (int j = 0; j < 8; j++)
+					{
+						unsigned char tlow = tile.lowBits[j];
+						unsigned char thigh = tile.highBits[j];
+						for (int i = 0; i < 8; i++)
+						{
+							unsigned char pdx = ((tlow >> (7 - i)) & 1) | (((thigh >> (7 - i)) & 1) << 1);
+							pdx |= attBits;
 
+							unsigned char color = memory[0x3f00 + pdx];
+
+							SDL_SetRenderDrawColor(renderer, palette[3 * color], palette[3 * color + 1], palette[3 * color + 2], 255);
+							SDL_RenderDrawPoint(renderer, 8*tx + i, 8*ty + j);
+
+						}
+					}
 				}
-			}
+		    
 
 			SDL_RenderPresent(renderer);
 		}

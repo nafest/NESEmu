@@ -41,6 +41,9 @@ private:
 	unsigned char ctrl2;
 	unsigned char status;
 
+	bool vramAdressLatch;
+	unsigned short vramAdress;
+
 	int currentScanLine;
 	int currentCycle;
 
