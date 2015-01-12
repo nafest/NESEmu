@@ -1,6 +1,12 @@
 #pragma once
 
-#include "PPU.h"
+class PPU;
+
+enum eInterrupt
+{
+	eNoInterrupt,
+	eNMI
+};
 
 class CPU6502
 {
@@ -49,6 +55,8 @@ public:
 	int OneStep();
 	void SetPC(unsigned short PC);
 
+	void SetInterrupt(eInterrupt intr);
+
 private:
 	unsigned short PC;   /* program counter */
 	unsigned char  SP;   /* stack pointer */
@@ -59,6 +67,8 @@ private:
 
 	unsigned char  *memory;  /* pointer to memory */
 	PPU            *ppu;
+
+	eInterrupt  interrupt;
 
 	long cycles;
 };

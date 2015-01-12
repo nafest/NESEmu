@@ -23,14 +23,14 @@ void ROM::CopyPRG(int bank, unsigned char * memory)
 	if (bank >= data[4])
 		bank = data[4] - 1;
 	
-	int romOffset = 16 + 16318 * bank;
+	int romOffset = 16 + 16384 * bank;
 
-	memcpy(memory + memOffset, data.data() + romOffset, 16318);
+	memcpy(memory + memOffset, data.data() + romOffset, 16384);
 }
 
 void ROM::CopyCHR(unsigned char * memory)
 {
-	int romOffset = 16 + 16318 * data[4];
+	int romOffset = 16 + 16384 * data[4];
 
 	memcpy(memory, data.data() + romOffset, 8196);
 }

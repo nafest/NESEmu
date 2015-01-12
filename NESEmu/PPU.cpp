@@ -96,10 +96,14 @@ const unsigned char * PPU::GetMemoryPtr() const
 }
 
 void PPU::WriteCtrl1(unsigned char value)
-{}
+{
+	ctrl1 = value;
+}
 
 void PPU::WriteCtrl2(unsigned char value)
-{}
+{
+	ctrl2 = value;
+}
 
 void PPU::WriteSPRAddress(unsigned char value)
 {}
@@ -210,6 +214,14 @@ void PPU::Step() {
 	else if (currentScanLine == 240) {
 		/* unset status bit 7*/
 		status &= (0xff ^ (1 << 7));
+		if (currentCycle == 0)
+		{
+			if ((ctrl1 & (1 << 7)) != 0)
+			{
+				// set NMI
+				cpu->SetInterrupt(eNMI);
+			}
+		}
 	}
 	else if (currentScanLine >= 240 && currentScanLine < 261)
 	{

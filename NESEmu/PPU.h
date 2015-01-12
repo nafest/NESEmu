@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL.h>
+#include "CPU6502.h"
 
 class Tile
 {
@@ -15,6 +16,11 @@ class PPU
 public:
 	PPU(unsigned char * memory);
 	~PPU();
+
+	void SetCPU(CPU6502 * cpu)
+	{
+		this->cpu = cpu;
+	}
 
 	void Step();
 
@@ -33,6 +39,8 @@ public:
 	const unsigned char* GetMemoryPtr() const;
 
 private:
+	CPU6502  *cpu;
+
 	unsigned char memory[16 * 1024];
 
 	unsigned char palette[3 * 64];

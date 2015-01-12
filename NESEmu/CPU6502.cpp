@@ -1,4 +1,5 @@
 #include "CPU6502.h"
+#include "PPU.h"
 #include <iostream>
 
 using namespace std;
@@ -16,6 +17,8 @@ CPU6502::CPU6502(unsigned char *memory, PPU *ppu)
 	P = 0x24;
 
 	cycles = 0;
+
+	ppu->SetCPU(this);
 }
 
 
@@ -23,6 +26,10 @@ CPU6502::~CPU6502()
 {
 }
 
+void CPU6502::SetInterrupt(eInterrupt intr)
+{
+	this->interrupt = intr;
+}
 
 void CPU6502::SetPC(unsigned short pc)
 {
@@ -376,7 +383,21 @@ int CPU6502::OneStep() {
 
 	PrintState();
 
-	/* fetch the next instruction */
+	if (interrupt != eNoInterrupt)
+	{
+		// push PC 
+		Push(PC & 0xff);
+		Push((PC >> 8) & 0xff);
+		// and Status Register on stack
+		Push(P);
+
+		PC = *((unsigned short*)(memory + 0xfffa));
+		SetInterrupt(true);
+
+		interrupt = eNoInterrupt;
+	}
+
+    /* fetch the next instruction */
 	unsigned char OpCode = memory[PC];
 
 	/* increase the program counter */
@@ -1224,7 +1245,7 @@ int CPU6502::OneStep() {
 		LDA(M);
 		return 6;
 
-	case 0x3b1:
+	case 0xb1:
 		/* indirect,Y addressing */
 		addr = memory[PC];
 		addr = Read(addr) + Y;
