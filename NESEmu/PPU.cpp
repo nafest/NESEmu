@@ -132,7 +132,10 @@ void PPU::WriteVRAMAddress2(unsigned char value)
 void PPU::WriteVRAMIO(unsigned char value)
 {
 	memory[vramAdress] = value;
-	vramAdress++;
+	if (ctrl1 & (1 << 2))
+		vramAdress += 32;
+	else
+		vramAdress++;
 }
 
 unsigned char PPU::ReadStatus()
@@ -140,12 +143,17 @@ unsigned char PPU::ReadStatus()
 	return status;
 }
 
-Tile PPU::fetchTile(int nameTableIdx, int x, int y)
+Tile PPU::fetchTile(int nameTableIdx, int x, int y, bool background)
 {
 	Tile     tile;
 	unsigned short baseAddress = 0x2000 + nameTableIdx*0x400;
     unsigned short tileAddress = baseAddress + y * 32 + x;
-	unsigned short patternAddress = memory[tileAddress] + 0x0000;
+	unsigned short patternTable = 0x0000;
+
+	if (background)
+		patternTable = (ctrl1 & (1 << 4)) ? 0x1000 : 0x0000;
+
+	unsigned short patternAddress = memory[tileAddress] + patternTable;
 
 	for (int i = 0; i < 8; i++)
 	{
@@ -184,8 +192,8 @@ void PPU::Step() {
 			for (int tx = 0; tx < 32; tx++)
 				for (int ty = 0; ty < 30; ty++)
 				{
-					/* get the first tile in L0 */
-					Tile tile = fetchTile(0, 0, 0);
+					/* get the tiles in the selected name table */
+					Tile tile = fetchTile((ctrl1 & 0x3), tx, ty, true);
 
 					unsigned char attBits = tile.attBits << 2;
 

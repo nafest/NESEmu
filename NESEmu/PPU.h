@@ -32,7 +32,7 @@ public:
 	void WriteVRAMAddress2(unsigned char value);
 	void WriteVRAMIO(unsigned char value);
 
-	Tile fetchTile(int nameTableIdx, int x, int y);
+	Tile fetchTile(int nameTableIdx, int x, int y, bool background);
 
 	unsigned char ReadStatus();
 
