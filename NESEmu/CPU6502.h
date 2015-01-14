@@ -1,11 +1,42 @@
 #pragma once
 
+#include <iostream>
+
+using namespace std;
+
 class PPU;
 
 enum eInterrupt
 {
 	eNoInterrupt,
 	eNMI
+};
+
+class CPU6502State
+{
+public:
+	unsigned short PC;   /* program counter */
+	unsigned char  SP;   /* stack pointer */
+	unsigned char  A;    /* accumulator register */
+	unsigned char  X;    /* index register X */
+	unsigned char  Y;    /* index register Y */
+	unsigned char  P;    /* processor status */
+
+	bool IsEqual(CPU6502State other)
+	{
+		return ((PC == other.PC) && (SP == other.SP) && (A == other.A) &&
+			(X == other.X) && (Y == other.Y )&& (P == other.P));
+	}
+
+	void PrintState() {
+		cout << hex << (int)PC << "\tA: " << hex << (int)A;
+		cout << "\tX: " << hex << (int)X;
+		cout << "\tY: " << hex << (int)Y;
+		cout << "\tP: " << hex << (int)P;
+		cout << "\tSP: " << hex << (int)SP;
+
+		cout << endl;
+	}
 };
 
 class CPU6502
@@ -15,6 +46,8 @@ public:
 	~CPU6502();
 
 	void PrintState();
+	CPU6502State GetState() const;
+
 	void SetCarry(bool value);
 	bool GetCarry();
 	void SetZero(bool value);

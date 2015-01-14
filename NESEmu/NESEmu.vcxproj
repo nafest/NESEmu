@@ -155,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU6502.h" />
+    <ClInclude Include="CPU6502_test.h" />
     <ClInclude Include="Emulator.h" />
     <ClInclude Include="PPU.h" />
     <ClInclude Include="ROM.h" />
@@ -163,6 +164,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CPU6502.cpp" />
+    <ClCompile Include="CPU6502_test.cpp" />
     <ClCompile Include="Emulator.cpp" />
     <ClCompile Include="NESEmu.cpp" />
     <ClCompile Include="PPU.cpp" />

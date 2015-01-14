@@ -207,7 +207,7 @@ void PPU::Step() {
 							pdx |= attBits;
 
 							unsigned char color = memory[0x3f00 + pdx];
-
+							//color = pdx;
 							SDL_SetRenderDrawColor(renderer, palette[3 * color], palette[3 * color + 1], palette[3 * color + 2], 255);
 							SDL_RenderDrawPoint(renderer, 8*tx + i, 8*ty + j);
 

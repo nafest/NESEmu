@@ -47,6 +47,20 @@ void CPU6502::PrintState() {
 	cout << endl;
 }
 
+CPU6502State CPU6502::GetState() const
+{
+	CPU6502State state;
+
+	state.A = this->A;
+	state.P = this->P;
+	state.X = this->X;
+	state.Y = this->Y;
+	state.SP = this->SP;
+	state.PC = this->PC;
+
+	return state;
+}
+
 void CPU6502::SetCarry(bool value) {
 	/* the carry flag is in bit 0 of P */
 	if (value)
@@ -207,11 +221,11 @@ void CPU6502::ADC(unsigned char M)
 
 void CPU6502::SBC(unsigned char M)
 {
-	unsigned short result = A - M - (1 - (GetCarry() ? 1 : 0));
+	signed short result = A - M - (1 - (GetCarry() ? 1 : 0));
 
-	SetCarry(result > 255);
+	SetCarry(result < 0 ? false : true);
 	SetZero((result & 0xff) == 0);
-	if ((((A ^ M) & 0x80) == 0) && (((A ^ result) & 0x80) != 0))
+	if ((((A ^ M) & 0x80) != 0) && (((A ^ result) & 0x80) != 0))
 		SetOverflow(true);
 	else
 		SetOverflow(false);
@@ -702,16 +716,22 @@ int CPU6502::OneStep() {
 	/* TAX - Transfer A to X */
 	case 0xaa:
 		X = A;
+		SetZero(X == 0);
+		SetNegative(X > 127);
 		return 2;
 
 	/* TAX - Transfer A to Y */
 	case 0xa8:
 		Y = A;
+		SetZero(Y == 0);
+		SetNegative(Y > 127);
 		return 2;
 
 	/* TSX - Transfer Stack Pointer to X */
 	case 0xba:
 		X = SP;
+		SetZero(X == 0);
+		SetNegative(X > 127);
 		return 2;
 
 	/* TXA - Transfer X to A */
@@ -1190,6 +1210,8 @@ int CPU6502::OneStep() {
 	case 0x20:
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
+
+		// TODO: Push the other way round
 		Push((PC + 1) & 0xff);
 		Push(((PC + 1) >> 8) & 0xff);
 		PC = addr;
