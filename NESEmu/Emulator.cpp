@@ -2,7 +2,7 @@
 
 #include "CPU6502_test.h"
 
-//#define TEST
+#define TEST
 
 Emulator::Emulator()
 {

@@ -400,8 +400,8 @@ int CPU6502::OneStep() {
 	if (interrupt != eNoInterrupt)
 	{
 		// push PC 
-		Push(PC & 0xff);
 		Push((PC >> 8) & 0xff);
+		Push(PC & 0xff);
 		// and Status Register on stack
 		Push(P);
 
@@ -857,8 +857,8 @@ int CPU6502::OneStep() {
 	/* BRK - Force Interrupt */
 	case 0x00:
 		/* push PC and P to the stack */
-		Push(PC & 0xff);
 		Push((PC >> 8) & 0xff);
+		Push(PC & 0xff);
 		Push(P);
 
 		SetBreak(true);
@@ -1211,9 +1211,8 @@ int CPU6502::OneStep() {
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 
-		// TODO: Push the other way round
-		Push((PC + 1) & 0xff);
 		Push(((PC + 1) >> 8) & 0xff);
+		Push((PC + 1) & 0xff);
 		PC = addr;
 		return 6;
 
@@ -1594,15 +1593,16 @@ int CPU6502::OneStep() {
 
 	/* RTI - Return from Interrupt*/
 	case 0x40:
+		/* TODO: assure that only correct bits are set*/
 		P = Pop();
 		PC = Pop();
-		PC = (PC << 8) + Pop();
+		PC = PC + (Pop() << 8);
 		return 6;
 
 	/* RTS - Return from Subroutine*/
 	case 0x60:
 		PC = Pop();
-		PC = (PC<<8) + Pop();
+		PC = PC + (Pop() << 8);
 		PC++;
 		return 6;
 
