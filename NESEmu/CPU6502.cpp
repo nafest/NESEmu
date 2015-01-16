@@ -326,18 +326,18 @@ void CPU6502::ASL(unsigned char M)
 	SetZero((result & 0xff) == 0);
 	SetNegative((result & (1 << 7)) != 0);
 
-	A = result && 0xff;
+	A = result & 0xff;
 }
 
 void CPU6502::LSR(unsigned char M)
 {
-	unsigned short result = M >> 1 | M << 7;
+	unsigned short result = M >> 1;
 
 	SetCarry((M & (1 << 0)) != 0);
 	SetZero((result & 0xff) == 0);
 	SetNegative((result & (1 << 7)) != 0);
 
-	A = result && 0xff;
+	A = result & 0xff;
 }
 
 void CPU6502::ROL(unsigned char M)
@@ -1593,8 +1593,9 @@ int CPU6502::OneStep() {
 
 	/* RTI - Return from Interrupt*/
 	case 0x40:
-		/* TODO: assure that only correct bits are set*/
 		P = Pop();
+		SetBreak(false);
+		P |= (1 << 5); /* Bit 5 is always set */
 		PC = Pop();
 		PC = PC + (Pop() << 8);
 		return 6;
