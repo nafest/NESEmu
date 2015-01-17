@@ -318,52 +318,113 @@ void CPU6502::INC(unsigned short addr)
 	Store(addr, result);
 }
 
-void CPU6502::ASL(unsigned char M)
+void CPU6502::ASLA()
 {
+	unsigned short result = A << 1;
+
+	SetCarry((A & (1 << 7)) != 0);
+	SetZero((result & 0xff) == 0);
+	SetNegative((result & (1 << 7)) != 0);
+
+	A = result & 0xff;
+}
+
+void CPU6502::ASLMem(unsigned short addr)
+{
+	unsigned char M = Read(addr);
 	unsigned short result = M << 1;
 
 	SetCarry((M & (1 << 7)) != 0);
 	SetZero((result & 0xff) == 0);
 	SetNegative((result & (1 << 7)) != 0);
 
-	A = result & 0xff;
+	Store(addr, result & 0xff);
 }
 
-void CPU6502::LSR(unsigned char M)
+void CPU6502::LSRA()
 {
-	unsigned short result = M >> 1;
+	unsigned short result = A >> 1;
 
-	SetCarry((M & (1 << 0)) != 0);
+	SetCarry((A & (1 << 0)) != 0);
 	SetZero((result & 0xff) == 0);
 	SetNegative((result & (1 << 7)) != 0);
 
 	A = result & 0xff;
 }
 
-void CPU6502::ROL(unsigned char M)
+void CPU6502::LSRMem(unsigned short addr)
 {
+	unsigned char M = Read(addr);
+	unsigned short result = M >> 1;
+
+	SetCarry((M & (1 << 0)) != 0);
+	SetZero((result & 0xff) == 0);
+	SetNegative((result & (1 << 7)) != 0);
+
+	Store(addr,result & 0xff);
+}
+
+
+void CPU6502::ROLA()
+{
+	unsigned char result = A << 1;
+
+	if (GetCarry())
+		result += 1;
+
+	SetCarry((A & (1 << 7)) != 0);
+	SetNegative(result > 127);
+	SetZero(result == 0);
+
+	A = result;
+}
+
+void CPU6502::ROLMem(unsigned short addr)
+{
+	unsigned char M = Read(addr);
 	unsigned char result = M << 1;
 
 	if (GetCarry())
 		result += 1;
 
 	SetCarry((M & (1 << 7)) != 0);
+	SetNegative(result > 127);
+	SetZero(result == 0);
+
+	Store(addr, result);
+}
+
+
+void CPU6502::RORA()
+{
+	unsigned char result = A >> 1;
+
+	if (GetCarry())
+		result += 128;
+
+	SetCarry((A & 1) != 0);
+	SetNegative(result > 127);
+	SetZero(result == 0);
 
 	A = result;
 }
 
 
-void CPU6502::ROR(unsigned char M)
+void CPU6502::RORMem(unsigned short addr)
 {
+	unsigned char M = Read(addr);
 	unsigned char result = M >> 1;
 
 	if (GetCarry())
 		result += 128;
 
 	SetCarry((M & 1) != 0);
+	SetNegative(result > 127);
+	SetZero(result == 0);
 
-	A = result;
+	Store(addr,result);
 }
+
 
 void CPU6502::LDA(unsigned char M)
 {
@@ -477,9 +538,7 @@ int CPU6502::OneStep() {
 
 	case 0x61:
 		/* indirect,X addressing */
-		addr = memory[PC];
-		addr = addr + X;
-		addr = *((unsigned short *)(memory + addr));
+		addr = AdressIndirectX();
 		PC += 1;
 		M = Read(addr);
 		ADC(M);
@@ -487,9 +546,7 @@ int CPU6502::OneStep() {
 
 	case 0x71:
 		/* indirect,Y addressing */
-		addr = memory[PC];
-		addr = *((unsigned short *)(memory + addr));
-		addr += Y;
+		addr = AdressIndirectY();
 		PC += 1;
 		M = Read(addr);
 		ADC(M);
@@ -548,9 +605,7 @@ int CPU6502::OneStep() {
 
 	case 0x21:
 		/* indirect,X addressing */
-		addr = memory[PC];
-		addr = addr + X;
-		addr = *((unsigned short *)(memory + addr));
+		addr = AdressIndirectX();
 		PC += 1;
 		M = Read(addr);
 		AND(M);
@@ -558,9 +613,7 @@ int CPU6502::OneStep() {
 
 	case 0x31:
 		/* indirect,Y addressing */
-		addr = memory[PC];
-		addr = *((unsigned short *)(memory + addr));
-		addr += Y;
+		addr = AdressIndirectY();
 		PC += 1;
 		M = Read(addr);
 		AND(M);
@@ -570,31 +623,28 @@ int CPU6502::OneStep() {
 	case 0x06:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = Read(addr);
 		PC++;
-		ASL(M);
+		ASLMem(addr);
 		return 5;
 
 	case 0x0a:
 		/* Accumulator */
-		ASL(A);
+		ASLA();
 		return 2;
 
 	case 0x16:
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = Read(addr);
 		PC++;
-		ASL(M);
+		ASLMem(addr);
 		return 6;
 
 	case 0x0e:
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = Read(addr);
-		ASL(M);
+		ASLMem(addr);
 		return 6;
 
 	case 0x1e:
@@ -602,8 +652,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = Read(addr);
-		ASL(M);
+		ASLMem(addr);
 		return 7;
 
 
@@ -651,18 +700,14 @@ int CPU6502::OneStep() {
 
 	case 0x81:
 		/* indirect,X addressing */
-		addr = memory[PC];
-		addr = addr + X;
-		addr = *((unsigned short *)(memory + addr));
+		addr = AdressIndirectX();
 		PC += 1;
 		Store(addr, A);
 		return 6;
 
 	case 0x91:
 		/* indirect,Y addressing */
-		addr = memory[PC];
-		addr = *((unsigned short *)(memory + addr));
-		addr += Y;
+		addr = AdressIndirectY();
 		PC += 1;
 		Store(addr, A);
 		return 6;
@@ -966,9 +1011,7 @@ int CPU6502::OneStep() {
 
 	case 0xc1:
 		/* indirect,X addressing */
-		addr = memory[PC];
-		addr = addr + X;
-		addr = *((unsigned short *)(memory + addr));
+		addr = AdressIndirectX();
 		PC += 1;
 		M = Read(addr);
 		CMP(M);
@@ -976,9 +1019,7 @@ int CPU6502::OneStep() {
 
 	case 0xd1:
 		/* indirect,Y addressing */
-		addr = memory[PC];
-		addr = *((unsigned short *)(memory + addr));
-		addr += Y;
+		addr = AdressIndirectY();
 		PC += 1;
 		M = Read(addr);
 		CMP(M);
@@ -1130,9 +1171,7 @@ int CPU6502::OneStep() {
 
 	case 0x41:
 		/* indirect,X addressing */
-		addr = memory[PC];
-		addr = addr + X;
-		addr = *((unsigned short *)(memory + addr));
+		addr = AdressIndirectX();
 		PC += 1;
 		M = Read(addr);
 		EOR(M);
@@ -1140,9 +1179,7 @@ int CPU6502::OneStep() {
 
 	case 0x51:
 		/* indirect,Y addressing */
-		addr = memory[PC];
-		addr = *((unsigned short *)(memory + addr));
-		addr += Y;
+		addr = AdressIndirectY();
 		PC += 1;
 		M = Read(addr);
 		EOR(M);
@@ -1203,7 +1240,12 @@ int CPU6502::OneStep() {
 	case 0x6c:
 		/* indirect addressing */
 		addr = *((unsigned short*)(memory + PC));
-		PC = PC + addr + 2;
+		PC = *((unsigned short*)(memory + addr));
+		if ((addr & 0xff) == 0xff)
+		{
+			PC = PC & 0x00ff;
+			PC = PC | (memory[addr & 0xff00] << 8);
+		}
 		return 5;
 
 	/* JSR - Jump to Subroutine */
@@ -1269,9 +1311,7 @@ int CPU6502::OneStep() {
 
 	case 0xa1:
 		/* indirect,X addressing */
-		addr = memory[PC];
-		addr = addr + X;
-		addr = *((unsigned short *)(memory + addr));
+		addr = AdressIndirectX();
 		PC += 1;
 		M = Read(addr);
 		LDA(M);
@@ -1279,9 +1319,7 @@ int CPU6502::OneStep() {
 
 	case 0xb1:
 		/* indirect,Y addressing */
-		addr = memory[PC];
-		addr = *((unsigned short *)(memory + addr));
-		addr += Y;
+		addr = AdressIndirectY();
 		PC += 1;
 		M = Read(addr);
 		LDA(M);
@@ -1375,31 +1413,28 @@ int CPU6502::OneStep() {
 	case 0x46:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = Read(addr);
 		PC++;
-		LSR(M);
+		LSRMem(addr);
 		return 5;
 
 	case 0x4a:
 		/* Accumulator */
-		LSR(A);
+		LSRA();
 		return 2;
 
 	case 0x56:
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = Read(addr);
 		PC++;
-		LSR(M);
+		LSRMem(addr);
 		return 6;
 
 	case 0x4e:
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = Read(addr);
-		LSR(M);
+		LSRMem(addr);
 		return 6;
 
 	case 0x5e:
@@ -1407,8 +1442,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = Read(addr);
-		LSR(M);
+		LSRMem(addr);
 		return 7;
 
 	/* NOP - No Operation */
@@ -1468,9 +1502,7 @@ int CPU6502::OneStep() {
 
 	case 0x01:
 		/* indirect,X addressing */
-		addr = memory[PC];
-		addr = addr + X;
-		addr = *((unsigned short *)(memory + addr));
+		addr = AdressIndirectX();
 		PC += 1;
 		M = Read(addr);
 		ORA(M);
@@ -1478,9 +1510,7 @@ int CPU6502::OneStep() {
 
 	case 0x11:
 		/* indirect,Y addressing */
-		addr = memory[PC];
-		addr = *((unsigned short *)(memory + addr));
-		addr += Y;
+		addr = AdressIndirectY();
 		PC += 1;
 		M = Read(addr);
 		ORA(M);
@@ -1514,31 +1544,28 @@ int CPU6502::OneStep() {
 	case 0x26:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = Read(addr);
 		PC++;
-		ROL(M);
+		ROLMem(addr);
 		return 5;
 
 	case 0x2a:
 		/* Accumulator */
-		ROL(A);
+		ROLA();
 		return 2;
 
 	case 0x36:
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = Read(addr);
 		PC++;
-		ROL(M);
+		ROLMem(addr);
 		return 6;
 
 	case 0x2e:
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = Read(addr);
-		ROL(M);
+		ROLMem(addr);
 		return 6;
 
 	case 0x3e:
@@ -1546,8 +1573,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = Read(addr);
-		ROL(M);
+		ROLMem(addr);
 		return 7;
 
 
@@ -1555,31 +1581,28 @@ int CPU6502::OneStep() {
 	case 0x66:
 		/* ZeroPage */
 		addr = memory[PC];
-		M = Read(addr);
 		PC++;
-		ROR(M);
+		RORMem(addr);
 		return 5;
 
 	case 0x6a:
 		/* Accumulator */
-		ROR(A);
+		RORA();
 		return 2;
 
 	case 0x76:
 		/* ZeroPage, X */
 		addr = memory[PC];
 		addr = (addr + X) & 0xff;
-		M = Read(addr);
 		PC++;
-		ROR(M);
+		RORMem(addr);
 		return 6;
 
 	case 0x6e:
 		/* absolute addressing */
 		addr = *((unsigned short*)(memory + PC));
 		PC += 2;
-		M = Read(addr);
-		ROR(M);
+		RORMem(addr);
 		return 6;
 
 	case 0x7e:
@@ -1587,8 +1610,7 @@ int CPU6502::OneStep() {
 		addr = *((unsigned short*)(memory + PC));
 		addr = addr + X;
 		PC += 2;
-		M = Read(addr);
-		ROR(M);
+		RORMem(addr);
 		return 7;
 
 	/* RTI - Return from Interrupt*/
@@ -1660,9 +1682,7 @@ int CPU6502::OneStep() {
 
 	case 0xe1:
 		/* indirect,X addressing */
-		addr = memory[PC];
-		addr = addr + X;
-		addr = *((unsigned short *)(memory + addr));
+		addr = AdressIndirectX();
 		PC += 1;
 		M = Read(addr);
 		SBC(M);
@@ -1670,9 +1690,7 @@ int CPU6502::OneStep() {
 
 	case 0xf1:
 		/* indirect,Y addressing */
-		addr = memory[PC];
-		addr = *((unsigned short *)(memory + addr));
-		addr += Y;
+		addr = AdressIndirectY();
 		PC += 1;
 		M = Read(addr);
 		SBC(M);

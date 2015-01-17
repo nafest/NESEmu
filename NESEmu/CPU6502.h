@@ -63,12 +63,47 @@ public:
 	void Push(unsigned char value);
 	unsigned char Pop();
 
+	unsigned short AdressIndirectX()
+	{
+		unsigned short zpAddr = memory[PC] + X;
+
+		if (zpAddr > 255)
+			zpAddr -= 256;
+
+		unsigned char low = memory[zpAddr];
+		zpAddr++;
+		if (zpAddr > 255)
+			zpAddr -= 256;
+
+		unsigned char high = memory[zpAddr];
+
+		unsigned short addr = (high << 8) + low;
+
+		return addr;
+	}
+
+	unsigned short AdressIndirectY()
+	{
+		unsigned short zpAddr = memory[PC];
+		unsigned char low = memory[zpAddr];
+		zpAddr++;
+		if (zpAddr > 255)
+			zpAddr -= 256;
+
+		unsigned char high = memory[zpAddr];
+
+		unsigned short addr = (high << 8) + low;
+
+		return addr + Y;
+	}
+
 	unsigned char Read(unsigned short addr);
 	void Store(unsigned short addr, unsigned char value);
 	
 	void ADC(unsigned char M);
 	void AND(unsigned char M);
-	void ASL(unsigned char M);
+	void ASLA();
+	void ASLMem(unsigned short addr);
 	void BIT(unsigned char M);
 	void LDA(unsigned char M);
 	void LDX(unsigned char M);
@@ -79,10 +114,13 @@ public:
 	void DEC(unsigned short addr);
 	void EOR(unsigned char M);
 	void INC(unsigned short addr);
-	void LSR(unsigned char M);
+	void LSRA();
+	void LSRMem(unsigned short addr);
 	void ORA(unsigned char M);
-	void ROL(unsigned char M);
-	void ROR(unsigned char M);
+	void ROLA();
+	void ROLMem(unsigned short addr);
+	void RORA();
+	void RORMem(unsigned short addr);
 	void SBC(unsigned char M);
 	int Step();
 	int OneStep();
