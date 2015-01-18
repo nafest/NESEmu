@@ -190,17 +190,21 @@ void CPU6502::Store(unsigned short addr, unsigned char value)
 	if (0x2005 == addr) {
 		/* write to VRAM Ram address register 1*/
 		ppu->WriteVRAMAddress1(value);
-		cout << "SPR VRAM address register 1" << endl;
+		cout << "VRAM address register 1" << endl;
 	}
 	if (0x2006 == addr) {
 		/* write to VRAM Ram address register 2*/
 		ppu->WriteVRAMAddress2(value);
-		cout << "SPR VRAM address register 2" << endl;
+		cout << "VRAM address register 2" << endl;
 	}
 	if (0x2007 == addr) {
 		/* write to VRAM Ram I/O register*/
 		ppu->WriteVRAMIO(value);
-		cout << "SPR VRAM I/O register" << endl;
+		cout << "VRAM I/O register" << endl;
+	}
+	if (0x4014 == addr) {
+		/* sprite DMA */
+		cout << "Sprite DMA register" << endl;
 	}
 }
 
@@ -456,7 +460,7 @@ int CPU6502::Step() {
 
 int CPU6502::OneStep() {
 
-	PrintState();
+	//PrintState();
 
 	if (interrupt != eNoInterrupt)
 	{

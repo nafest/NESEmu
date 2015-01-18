@@ -152,8 +152,10 @@ Tile PPU::fetchTile(int nameTableIdx, int x, int y, bool background)
 
 	if (background)
 		patternTable = (ctrl1 & (1 << 4)) ? 0x1000 : 0x0000;
+	else
+		patternTable = (ctrl1 & (1 << 3)) ? 0x1000 : 0x0000;
 
-	unsigned short patternAddress = memory[tileAddress] + patternTable;
+	unsigned short patternAddress = memory[tileAddress]*16 + patternTable;
 
 	for (int i = 0; i < 8; i++)
 	{
