@@ -9,6 +9,9 @@ public:
 	unsigned char lowBits[8];
 	unsigned char highBits[8];
 	unsigned char attBits;
+
+	unsigned char X, Y;
+
 };
 
 class PPU
@@ -31,9 +34,10 @@ public:
 	void WriteVRAMAddress1(unsigned char value);
 	void WriteVRAMAddress2(unsigned char value);
 	void WriteVRAMIO(unsigned char value);
+	void DMAtoSPR(unsigned char *addr);
 
 	Tile fetchTile(int nameTableIdx, int x, int y, bool background);
-
+	Tile fetchSpriteTile(int spriteidx);
 	unsigned char ReadStatus();
 
 	const unsigned char* GetMemoryPtr() const;
@@ -42,12 +46,15 @@ private:
 	CPU6502  *cpu;
 
 	unsigned char memory[16 * 1024];
+	unsigned char sprmemory[256];
 
 	unsigned char palette[3 * 64];
 
 	unsigned char ctrl1;
 	unsigned char ctrl2;
 	unsigned char status;
+
+	unsigned char sprAdress;
 
 	bool vramAdressLatch;
 	unsigned short vramAdress;

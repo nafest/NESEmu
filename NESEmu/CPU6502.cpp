@@ -204,6 +204,7 @@ void CPU6502::Store(unsigned short addr, unsigned char value)
 	}
 	if (0x4014 == addr) {
 		/* sprite DMA */
+		ppu->DMAtoSPR(memory + value * 0x100);
 		cout << "Sprite DMA register" << endl;
 	}
 }
