@@ -210,7 +210,7 @@ Tile PPU::fetchBGTile(int nameTableIdx, int x, int y)
 
 	if (y % 4 > 1)
 		square += 2;
-	if (x % 4 > 0)
+	if (x % 4 > 1)
 		square += 1;
 
 	/* attr contains the bits in 33221100 */
