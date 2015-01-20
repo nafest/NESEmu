@@ -16,6 +16,7 @@ PPU::PPU(unsigned char *memory) {
 
 	vramAdress = 0x0;
 	vramAdressLatch = true;
+	addrXIsNext = true;
 
 	unsigned char myPal[3 * 64] = { 124, 124, 124,
 		0, 0, 252,
@@ -122,7 +123,14 @@ void PPU::WriteSPRIO(unsigned char value)
 }
 
 void PPU::WriteVRAMAddress1(unsigned char value)
-{}
+{
+	if (addrXIsNext)
+		addrX = value;
+	else
+		addrY = value;
+
+	addrXIsNext = !addrXIsNext;
+}
 
 void PPU::WriteVRAMAddress2(unsigned char value)
 {
@@ -172,20 +180,19 @@ Tile PPU::fetchSpriteTile(int spriteidx)
 		tile.highBits[i] = memory[patternAddress + 8 + i];
 	}
 
+	tile.idx = spriteidx;
+
 	return tile;
 }
 
-Tile PPU::fetchTile(int nameTableIdx, int x, int y, bool background)
+Tile PPU::fetchBGTile(int nameTableIdx, int x, int y)
 {
 	Tile     tile;
 	unsigned short baseAddress = 0x2000 + nameTableIdx*0x400;
     unsigned short tileAddress = baseAddress + y * 32 + x;
 	unsigned short patternTable = 0x0000;
 
-	if (background)
-		patternTable = (ctrl1 & (1 << 4)) ? 0x1000 : 0x0000;
-	else
-		patternTable = (ctrl1 & (1 << 3)) ? 0x1000 : 0x0000;
+    patternTable = (ctrl1 & (1 << 4)) ? 0x1000 : 0x0000;
 
 	unsigned short patternAddress = memory[tileAddress]*16 + patternTable;
 
@@ -225,82 +232,113 @@ void PPU::Step() {
 			status &= (0xff ^ (1 << 6));
 		}
 
-		/* unset status bit 7 */
-		status &= (0xff ^ (1 << 7));
-		if (currentScanLine == 239 && currentCycle == 0)
+		if (currentCycle == 0)
 		{
-			bool  set[32 * 8 * 30 * 8];
-
-			memset(set, false, 32 * 8 * 30 * 8);
-
-			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-			
-			for (int tx = 0; tx < 32; tx++)
-				for (int ty = 0; ty < 30; ty++)
-				{
-					/* get the tiles in the selected name table */
-					Tile tile = fetchTile((ctrl1 & 0x3), tx, ty, true);
-
-					unsigned char attBits = tile.attBits << 2;
-
-					for (int j = 0; j < 8; j++)
-					{
-						unsigned char tlow = tile.lowBits[j];
-						unsigned char thigh = tile.highBits[j];
-						for (int i = 0; i < 8; i++)
-						{
-							unsigned char pdx = ((tlow >> (7 - i)) & 1) | (((thigh >> (7 - i)) & 1) << 1);
-							
-							if (pdx != 0)
-								set[(8 * ty + j) * 32 * 8 + 8 * tx + i] = true;
-
-							pdx |= attBits;
-
-							unsigned char color = memory[0x3f00 + pdx];
-							//color = pdx;
-
-							SDL_SetRenderDrawColor(renderer, palette[3 * color], palette[3 * color + 1], palette[3 * color + 2], 255);
-							SDL_RenderDrawPoint(renderer, 8 * tx + i, 8 * ty + j);
-
-						}
-					}
-				}
-
-				
+			scanlineSprites.clear();
 			for (int sdx = 0; sdx < 64; sdx++)
 			{
-			
-			Tile sprTile = fetchSpriteTile(sdx);
-
-
-			unsigned char attBits = (sprTile.attBits & 0x03) << 2;
-
-			for (int j = 0; j < 8; j++)
-			{
-				unsigned char tlow = sprTile.lowBits[j];
-				unsigned char thigh = sprTile.highBits[j];
-				for (int i = 0; i < 8; i++)
-				{
-					unsigned char pdx = ((tlow >> (7 - i)) & 1) | (((thigh >> (7 - i)) & 1) << 1);
-					if (pdx == 0)
-						continue;
-
-					if (sdx == 0 && set[(sprTile.Y + j) * 32 * 8 + sprTile.X + i])
-						status |= 0x40; /* set hit flag*/
-
-					pdx |= attBits;
-
-					unsigned char color = memory[0x3f10 + pdx];
-					//color = pdx;
-					SDL_SetRenderDrawColor(renderer, palette[3 * color], palette[3 * color + 1], palette[3 * color + 2], 255);
-					SDL_RenderDrawPoint(renderer, sprTile.X + i, sprTile.Y + j);
-
-				}
+				Tile sprTile = fetchSpriteTile(sdx);
+				
+				if (sprTile.Y + 8 >= currentScanLine && (sprTile.Y+1) <= currentScanLine
+					&& scanlineSprites.size() < 8)
+					scanlineSprites.push_back(sprTile);
 			}
-		  }
-
-			SDL_RenderPresent(renderer);
 		}
+		if (currentCycle < 256)
+		{
+			int tx = (currentCycle+addrX) / 8;
+			int ty = currentScanLine / 8;
+
+			bool bgIsTransparent = true;
+			
+			int nameTable = (ctrl1 & 0x3);
+
+			if (tx > 31)
+			{
+				tx -= 32;
+				if (nameTable == 0)
+					nameTable++;
+				else
+					nameTable--;
+			}
+
+			/* fetch the background tile */
+			Tile bgTile = fetchBGTile(nameTable, tx, ty);
+
+			unsigned char attBits = bgTile.attBits << 2;
+
+			unsigned char tlow = bgTile.lowBits[currentScanLine % 8];
+			unsigned char thigh = bgTile.highBits[currentScanLine % 8];
+
+			int x = (currentCycle+addrX) % 8;
+
+			unsigned char pdx = ((tlow >> (7 - x)) & 1) | (((thigh >> (7 - x)) & 1) << 1);
+
+			if (pdx == 0)
+				bgIsTransparent = false;
+
+			pdx |= attBits;
+
+			unsigned char color = memory[0x3f00 + pdx];
+			//color = pdx;
+
+			SDL_SetRenderDrawColor(renderer, palette[3 * color], palette[3 * color + 1], palette[3 * color + 2], 255);
+			SDL_RenderDrawPoint(renderer, currentCycle, currentScanLine);
+
+			/* iterate over all sprites */
+
+			for (auto it = scanlineSprites.begin(); it != scanlineSprites.end(); it++)
+			{
+				/* coordinate in the sprite tile */
+				int x = currentCycle - (it->X+1);
+				int y = currentScanLine - (it->Y+1);
+
+				if (x < 0 || x > 7)
+					continue;
+
+				if ((it->attBits & (1 << 6)) != 0)
+				{
+					//mirror vertically;
+					x = 7 - x;
+				}
+
+				if ((it->attBits & (1 << 7)) != 0)
+				{
+					// mirror horizontally;
+					y = 7 - x;
+				}
+
+				tlow = it->lowBits[y];
+				thigh = it->highBits[y];
+
+				pdx = ((tlow >> (7 - x)) & 1) | (((thigh >> (7 - x)) & 1) << 1);
+
+				if (pdx != 0 && !bgIsTransparent && it->idx == 0)
+				{
+					// set sprite 0 hit flag
+					status |= 0x40; /* set hit flag*/
+				}
+
+				if (pdx == 0 || (ctrl2 & (1 << 4)) == 0)
+					continue;
+
+				unsigned char attBits = (it->attBits & 0x03) << 2;
+
+				pdx |= attBits;
+
+				unsigned char color = memory[0x3f10 + pdx];
+				//color = pdx;
+
+				SDL_SetRenderDrawColor(renderer, palette[3 * color], palette[3 * color + 1], palette[3 * color + 2], 255);
+				SDL_RenderDrawPoint(renderer, currentCycle, currentScanLine);
+
+			}
+
+
+		}
+
+		if (currentScanLine == 239 && currentCycle == 256)
+		  SDL_RenderPresent(renderer);
 	}
 	else if (currentScanLine == 240) {
 		/* unset status bit 7*/

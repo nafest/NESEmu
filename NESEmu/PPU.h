@@ -2,6 +2,7 @@
 
 #include <SDL.h>
 #include "CPU6502.h"
+#include <vector>
 
 class Tile
 {
@@ -11,6 +12,8 @@ public:
 	unsigned char attBits;
 
 	unsigned char X, Y;
+
+	unsigned char idx;
 
 };
 
@@ -36,7 +39,7 @@ public:
 	void WriteVRAMIO(unsigned char value);
 	void DMAtoSPR(unsigned char *addr);
 
-	Tile fetchTile(int nameTableIdx, int x, int y, bool background);
+	Tile fetchBGTile(int nameTableIdx, int x, int y);
 	Tile fetchSpriteTile(int spriteidx);
 	unsigned char ReadStatus();
 
@@ -54,8 +57,15 @@ private:
 	unsigned char ctrl2;
 	unsigned char status;
 
-	unsigned char sprAdress;
+	unsigned char addrX;
+	unsigned char addrY;
 
+	bool addrXIsNext;
+
+	vector<Tile> scanlineSprites;
+
+	unsigned char sprAdress;
+	
 	bool vramAdressLatch;
 	unsigned short vramAdress;
 
