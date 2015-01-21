@@ -7,6 +7,10 @@
 Emulator::Emulator()
 {
 	CPU6502_test  *cpuTest = new CPU6502_test();
+	bool quit = false;
+	SDL_Event event;
+
+	SDL_Init(SDL_INIT_VIDEO);
 
 	int instrCnt = 0;
 	ppu = new PPU(memory);
@@ -40,14 +44,25 @@ Emulator::Emulator()
 	}
 #endif
 
+	while (!quit)
+	{
+		if (SDL_PollEvent(&event))
+		{
+			switch (event.type)
+			{
+			case SDL_QUIT:
+				quit = true;
+				break;
+			}
+		}
 
-	for (; ; ) {
 		int cpuCycles = cpu->Step();
 		for (int i = 0; i < 3 * cpuCycles; i++)
 			ppu->Step();
 
 		instrCnt++;
 	}
+
 }
 
 

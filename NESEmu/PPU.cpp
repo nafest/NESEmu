@@ -6,8 +6,6 @@ PPU::PPU(unsigned char *memory) {
 	currentCycle = 0;
 	globalMemory = memory;
 
-	SDL_Init(SDL_INIT_VIDEO);
-
 	//window = SDL_CreateWindow("NESEmu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 256, 240, SDL_WINDOW_SHOWN);
 
 	//screenSurface = SDL_GetWindowSurface(window);
