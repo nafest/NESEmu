@@ -5,6 +5,7 @@
 using namespace std;
 
 class PPU;
+class Controller;
 
 enum eInterrupt
 {
@@ -44,6 +45,11 @@ class CPU6502
 public:
 	CPU6502(unsigned char *memory, PPU *ppu);
 	~CPU6502();
+
+	void SetController1(Controller *ctrl)
+	{
+		ctrl1 = ctrl;
+	}
 
 	void PrintState();
 	CPU6502State GetState() const;
@@ -138,6 +144,7 @@ private:
 
 	unsigned char  *memory;  /* pointer to memory */
 	PPU            *ppu;
+	Controller     *ctrl1;
 
 	eInterrupt  interrupt;
 

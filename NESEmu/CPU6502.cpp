@@ -159,6 +159,12 @@ unsigned char CPU6502::Read(unsigned short addr)
 {
 	if (0x2002 == addr)
 		return ppu->ReadStatus();
+	else if (0x4016 == addr)
+	{
+		// read controller 1;
+		// The buttons come in the order of A, B, Select, Start, Up, Down, Left, Right.
+		return 0x03;
+	}
 	else
 		return memory[addr];
 }

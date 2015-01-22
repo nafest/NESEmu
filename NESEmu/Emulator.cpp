@@ -1,4 +1,5 @@
 #include "Emulator.h"
+#include "Controller.h"
 
 #include "CPU6502_test.h"
 
@@ -15,6 +16,11 @@ Emulator::Emulator()
 	int instrCnt = 0;
 	ppu = new PPU(memory);
 	cpu = new CPU6502(memory,ppu);
+	
+	Controller *ctrl1 = new Controller();
+
+	cpu->SetController1(ctrl1);
+
 	/* load the Super Mario Bros ROM */
 #ifndef TEST
 	rom = new ROM("../../roms/Super Mario Bros. (E).nes");
@@ -52,6 +58,50 @@ Emulator::Emulator()
 			{
 			case SDL_QUIT:
 				quit = true;
+				break;
+
+			case SDL_KEYDOWN:
+				switch (event.key.keysym.sym)
+				{
+				case SDLK_UP:
+					break;
+
+				case SDLK_DOWN:
+					break;
+
+				case SDLK_LEFT:
+					break;
+
+				case SDLK_RIGHT:
+					break;
+
+				case SDLK_k:
+					ctrl1->SetStart(true);
+					break;
+
+				}
+				break;
+
+			case SDL_KEYUP:
+				switch (event.key.keysym.sym)
+				{
+				case SDLK_UP:
+					break;
+
+				case SDLK_DOWN:
+					break;
+
+				case SDLK_LEFT:
+					break;
+
+				case SDLK_RIGHT:
+					break;
+
+				case SDLK_k:
+					ctrl1->SetStart(false);
+					break;
+
+				}
 				break;
 			}
 		}
