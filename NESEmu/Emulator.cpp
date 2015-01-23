@@ -64,20 +64,36 @@ Emulator::Emulator()
 				switch (event.key.keysym.sym)
 				{
 				case SDLK_UP:
+					ctrl1->SetUp(true);
 					break;
 
 				case SDLK_DOWN:
+					ctrl1->SetDown(true);
 					break;
 
 				case SDLK_LEFT:
+					ctrl1->SetLeft(true);
 					break;
 
 				case SDLK_RIGHT:
+					ctrl1->SetRight(true);
 					break;
 
 				case SDLK_k:
 					ctrl1->SetStart(true);
 					break;
+
+				case SDLK_l:
+					ctrl1->SetSelect(true);
+					break;
+
+				case SDLK_LCTRL:
+					ctrl1->SetA(true);
+					break;
+
+				case SDLK_LALT:
+					ctrl1->SetB(true);
+
 
 				}
 				break;
@@ -86,21 +102,36 @@ Emulator::Emulator()
 				switch (event.key.keysym.sym)
 				{
 				case SDLK_UP:
+					ctrl1->SetUp(false);
 					break;
 
 				case SDLK_DOWN:
+					ctrl1->SetDown(false);
 					break;
 
 				case SDLK_LEFT:
+					ctrl1->SetLeft(false);
 					break;
 
 				case SDLK_RIGHT:
+					ctrl1->SetRight(false);
 					break;
 
 				case SDLK_k:
 					ctrl1->SetStart(false);
 					break;
 
+				case SDLK_l:
+					ctrl1->SetSelect(false);
+					break;
+
+				case SDLK_LCTRL:
+					ctrl1->SetA(false);
+					break;
+
+				case SDLK_LALT:
+					ctrl1->SetB(false);
+					break;
 				}
 				break;
 			}

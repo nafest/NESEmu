@@ -42,6 +42,32 @@ public:
 		stateStart = v;
 	}
 
+	void SetSelect(bool v)
+	{
+		stateSelect = v;
+	}
+
+	void SetLeft(bool v)
+	{
+		stateLeft = v;
+	}
+
+	void SetRight(bool v)
+	{
+		stateRight = v;
+	}
+
+	void SetUp(bool v)
+	{
+		stateUp = v;
+	}
+
+	void SetDown(bool v)
+	{
+		stateDown = v;
+	}
+
+
 	void ResetState()
 	{
 		nextState = 0;

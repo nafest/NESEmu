@@ -1,8 +1,6 @@
 #include "CPU6502.h"
 #include "PPU.h"
-#include <iostream>
-
-using namespace std;
+#include "Controller.h"
 
 
 CPU6502::CPU6502(unsigned char *memory, PPU *ppu)
@@ -163,7 +161,10 @@ unsigned char CPU6502::Read(unsigned short addr)
 	{
 		// read controller 1;
 		// The buttons come in the order of A, B, Select, Start, Up, Down, Left, Right.
-		return 0x03;
+		if (ctrl1->ReadNextState())
+			return 0x3;
+		else
+			return 0;
 	}
 	else
 		return memory[addr];
@@ -173,6 +174,10 @@ void CPU6502::Store(unsigned short addr, unsigned char value)
 {
 	memory[addr] = value;
 
+	if (0x4016 == addr)
+	{
+		ctrl1->ResetState();
+	}
 	if (0x2000 == addr) {
 		/* write to PPU ctrl register 1 */
 		ppu->WriteCtrl1(value);
