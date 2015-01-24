@@ -24,6 +24,8 @@ Emulator::Emulator()
 	/* load the Super Mario Bros ROM */
 #ifndef TEST
 	rom = new ROM("../../roms/Super Mario Bros. (E).nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/03-immediate.nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/04-zero_page.nes");
 #else
 	rom = new ROM("../../roms/nestest.nes");
 	cpu->SetPC(0xc000);
@@ -31,6 +33,9 @@ Emulator::Emulator()
 	/* and copy the two PGR-ROM banks */
 	rom->CopyPRG(0, memory);
 	rom->CopyPRG(1, memory);
+	/* set the instruction pointer to the address in the
+	   reset vector */
+	cpu->SetPC(*(unsigned short*)(memory + 0xfffc));
 	rom->CopyCHR((unsigned char*)ppu->GetMemoryPtr());
 
 #ifdef TEST
@@ -40,8 +45,11 @@ Emulator::Emulator()
 		CPU6502State gtState = *it;
 		CPU6502State currentState = cpu->GetState();
 
+		currentState.PrintState();
 		if (!gtState.IsEqual(currentState))
 		{
+			//currentState.PrintState();
+			gtState.PrintState();
 			cout << "inconsistent state" << endl;
 			exit(0);
 		}

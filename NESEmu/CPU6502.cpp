@@ -291,7 +291,7 @@ void CPU6502::CMP(unsigned char M)
 	SetCarry(A >= M);
 	SetZero(A == M);
 
-	SetNegative(result > 127);
+	SetNegative((result & 0xff) > 127);
 }
 
 void CPU6502::CPX(unsigned char M)
@@ -301,7 +301,7 @@ void CPU6502::CPX(unsigned char M)
 	SetCarry(X >= M);
 	SetZero(X == M);
 
-	SetNegative(result > 127);
+	SetNegative((result & 0xff) > 127);
 }
 
 void CPU6502::CPY(unsigned char M)
@@ -311,7 +311,7 @@ void CPU6502::CPY(unsigned char M)
 	SetCarry(Y >= M);
 	SetZero(Y == M);
 
-	SetNegative(result > 127);
+	SetNegative((result & 0xff) > 127);
 }
 
 void CPU6502::DEC(unsigned short addr)
@@ -1341,6 +1341,68 @@ int CPU6502::OneStep() {
 		LDA(M);
 		return 5;
 
+	/* LAX, load X and A, undocumented */
+	case 0xa7:
+		/* ZeroPage */
+		addr = memory[PC];
+		M = Read(addr);
+		PC++;
+		LDX(M);
+		LDA(M);
+		return 3;
+
+	case 0xb7:
+		/* ZeroPage,Y addressing */
+		addr = memory[PC];
+		addr = (addr + Y) & 0xff;
+		M = Read(addr);
+		PC++;
+		LDX(M);
+		LDA(M);
+		return 4;
+
+	case 0xbf:
+		/* absolute,Y addressing */
+		addr = *((unsigned short*)(memory + PC));
+		addr = addr + Y;
+		PC += 2;
+		M = Read(addr);
+		LDX(M);
+		LDA(M);
+		return 4;
+
+	case 0xb3:
+		/* indirect, Y addressing */
+		addr = memory[PC];
+		addr = *(unsigned short*)(memory + addr);
+		addr += Y;
+		M = Read(addr);
+		PC++;
+		LDX(M);
+		LDA(M);
+		return 4;
+
+	case 0xa3:
+		/* LAX, indirect, X */
+		addr = memory[PC];
+		addr = (addr + X) & 0xff;
+		addr = *(unsigned short*)(memory + addr);
+		M = Read(addr);
+		PC++;
+		LDX(M);
+		LDA(M);
+		return 4;
+
+	case 0xaf:
+		/* absolute addressing */
+		addr = *((unsigned short*)(memory + PC));
+		PC += 2;
+		M = Read(addr);
+		LDX(M);
+		LDA(M);
+		return 4;
+
+
 	/* LDX - load X Register */
 	case 0xa2:
 		/* immediate addressing */
@@ -1462,7 +1524,37 @@ int CPU6502::OneStep() {
 		return 7;
 
 	/* NOP - No Operation */
+	case 0x1a:
+	case 0x3a:
+	case 0x5a:
+	case 0x7a:
+	case 0xda:
+	case 0xfa:
 	case 0xea:
+		return 2;
+
+	/* undocumented NOPs*/
+	case 0x80:
+	case 0x04:
+	case 0x14:
+	case 0x34:
+	case 0x44:
+	case 0x54:
+	case 0x64:
+	case 0x74:
+	case 0xd4:
+	case 0xf4:
+		PC++;
+		return 2;
+
+	case 0x0c:
+	case 0x1c:
+	case 0x3c:
+	case 0x5c:
+	case 0x7c:
+	case 0xdc:
+	case 0xfc:
+		PC += 2;
 		return 2;
 
 	/* ORA - Logical Inclusive OR */
@@ -1726,7 +1818,6 @@ int CPU6502::OneStep() {
 	default:
 		cout << "invalid instruction" << endl;
 		exit(-1);
-		break;
 	}
 
 	return 0;
