@@ -26,6 +26,18 @@ Emulator::Emulator()
 	rom = new ROM("../../roms/Super Mario Bros. (E).nes");
 	//rom = new ROM("../../roms/instr_test-v4/rom_singles/03-immediate.nes");
 	//rom = new ROM("../../roms/instr_test-v4/rom_singles/04-zero_page.nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/05-zp_xy.nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/06-absolute.nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/07-abs_xy.nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/08-ind_x.nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/09-ind_y.nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/10-branches.nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/11-stack.nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/12-jmp_jsr.nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/13-rts.nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/14-rti.nes");
+	//rom = new ROM("../../roms/instr_test-v4/rom_singles/15-brk.nes");
+	//rom = new ROM("../../roms/blargg_ppu_tests_2005.09.15b/sprite_ram.nes");
 #else
 	rom = new ROM("../../roms/nestest.nes");
 	cpu->SetPC(0xc000);

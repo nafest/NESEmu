@@ -240,6 +240,9 @@ void PPU::Step() {
 				if (sprTile.Y + 8 >= currentScanLine && (sprTile.Y+1) <= currentScanLine
 					&& scanlineSprites.size() < 8)
 					scanlineSprites.push_back(sprTile);
+
+				if (scanlineSprites.size() == 8)
+					break;
 			}
 		}
 		if (currentCycle < 256)
@@ -272,20 +275,23 @@ void PPU::Step() {
 
 			unsigned char pdx = ((tlow >> (7 - x)) & 1) | (((thigh >> (7 - x)) & 1) << 1);
 
-			if (pdx == 0)
-				bgIsTransparent = false;
+			if ((ctrl2 & (1 << 3)) != 0)
+			{
 
-			pdx |= attBits;
+				if (pdx == 0)
+					bgIsTransparent = false;
 
-			unsigned char color = memory[0x3f00 + pdx];
-			//color = pdx;
+				pdx |= attBits;
 
-			SDL_SetRenderDrawColor(renderer, palette[3 * color], palette[3 * color + 1], palette[3 * color + 2], 255);
-			SDL_RenderDrawPoint(renderer, currentCycle, currentScanLine);
+				unsigned char color = memory[0x3f00 + pdx];
+				//color = pdx;
 
+				SDL_SetRenderDrawColor(renderer, palette[3 * color], palette[3 * color + 1], palette[3 * color + 2], 255);
+				SDL_RenderDrawPoint(renderer, currentCycle, currentScanLine);
+			}
 			/* iterate over all sprites */
-
-			for (auto it = scanlineSprites.begin(); it != scanlineSprites.end(); it++)
+			/* iterate in reverse because the first sprite has highest priority */
+			for (auto it = scanlineSprites.rbegin(); it != scanlineSprites.rend(); it++)
 			{
 				/* coordinate in the sprite tile */
 				int x = currentCycle - (it->X+1);
@@ -318,6 +324,10 @@ void PPU::Step() {
 				}
 
 				if (pdx == 0 || (ctrl2 & (1 << 4)) == 0)
+					continue;
+				
+				/* check if background has priority */
+				if ((it->attBits & (1 << 5)) != 0)
 					continue;
 
 				unsigned char attBits = (it->attBits & 0x03) << 2;

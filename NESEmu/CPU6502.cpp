@@ -920,9 +920,11 @@ int CPU6502::OneStep() {
 		/* push PC and P to the stack */
 		Push((PC >> 8) & 0xff);
 		Push(PC & 0xff);
-		Push(P);
+		// set the break flag on the stack only 
+		Push(P | (1 << 4));
 
-		SetBreak(true);
+		//SetBreak(true);
+		//SetInterrupt(1);
 		PC = *((unsigned short *)(memory + 0xfffe));
 		return 7;
 
