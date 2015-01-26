@@ -147,6 +147,12 @@ void PPU::WriteVRAMAddress2(unsigned char value)
 
 void PPU::WriteVRAMIO(unsigned char value)
 {
+	if (vramAdress >= 0x4000)
+		vramAdress -= 0x4000;
+
+	if (vramAdress >= 0x3000 && vramAdress < 0x3f00)
+		vramAdress -= 0x1000;
+
 	memory[vramAdress] = value;
 	if (ctrl1 & (1 << 2))
 		vramAdress += 32;

@@ -155,6 +155,19 @@ unsigned char CPU6502::Pop() {
 
 unsigned char CPU6502::Read(unsigned short addr)
 {
+	if (addr >= 0x800 && addr < 0x1000)
+		addr -= 0x800;
+
+	if (addr >= 0x1000 && addr < 0x1800)
+		addr -= 0x1000;
+
+	if (addr >= 0x1800 && addr < 0x2000)
+		addr -= 0x1800;
+
+	if (addr >= 0x2008 && addr < 0x4000)
+		addr = ((addr - 0x2000) % 8) + 0x2000;
+
+
 	if (0x2002 == addr)
 		return ppu->ReadStatus();
 	else if (0x4016 == addr)
@@ -172,6 +185,19 @@ unsigned char CPU6502::Read(unsigned short addr)
 
 void CPU6502::Store(unsigned short addr, unsigned char value)
 {
+
+	if (addr >= 0x800 && addr < 0x1000)
+		addr -= 0x800;
+
+	if (addr >= 0x1000 && addr < 0x1800)
+		addr -= 0x1000;
+
+	if (addr >= 0x1800 && addr < 0x2000)
+		addr -= 0x1800;
+
+	if (addr >= 0x2008 && addr < 0x4000)
+		addr = ((addr - 0x2000) % 8) + 0x2000;
+
 	memory[addr] = value;
 
 	if (0x4016 == addr)
